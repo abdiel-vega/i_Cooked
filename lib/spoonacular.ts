@@ -19,6 +19,13 @@ export interface Recipe {
   extendedIngredients?: Ingredient[];
   analyzedInstructions?: AnalyzedInstruction[];
   // Add any other properties you expect from the API
+  vegetarian?: boolean;
+  vegan?: boolean;
+  glutenFree?: boolean;
+  dairyFree?: boolean;
+  diets?: string[];
+  cuisines?: string[];
+  dishTypes?: string[];
 }
 
 export interface Ingredient {

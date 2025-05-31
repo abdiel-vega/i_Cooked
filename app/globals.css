@@ -66,3 +66,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom animation for recipe cards */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recipe-card-fade-in {
+  opacity: 0; /* Start transparent */
+  animation-name: fadeIn;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards; /* Keep visible after animation */
+  /* animation-delay will be set inline via style prop in the component */
+}

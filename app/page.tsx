@@ -11,6 +11,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useAuth } from '@/app/contexts/auth-context'
 import { 
   saveRecipeToSupabase, 
@@ -30,6 +31,9 @@ export default function HomePage() {
   const [modalError, setModalError] = useState<string | null>(null)
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<number>>(new Set());
   const [isSaving, setIsSaving] = useState<Record<number, boolean>>({}); // Track saving state per recipe
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true); // Assume there are always more random recipes
+  const [initialLoadAnimationComplete, setInitialLoadAnimationComplete] = useState(false);
 
   const updateSavedRecipeStatusForDisplayedRecipes = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
@@ -47,15 +51,51 @@ export default function HomePage() {
     setSavedRecipeIds(prev => new Set([...Array.from(prev), ...Array.from(newSavedIds)]));
   }, [user]);
 
+  const loadMoreRecipes = useCallback(async () => {
+    if (isFetchingMore || !hasMore) return;
+
+    setIsFetchingMore(true);
+    try {
+      const newRecipes = await getRandomRecipes(8);
+      if (newRecipes.length === 0) {
+        setHasMore(false);
+      } else {
+        setRecipes(prevRecipes => {
+          const existingRecipeIds = new Set(prevRecipes.map(r => r.id));
+          const uniqueNewRecipes = newRecipes.filter(r => !existingRecipeIds.has(r.id));
+          // No need to set initialLoadAnimationComplete here, only for initial load
+          return [...prevRecipes, ...uniqueNewRecipes];
+        });
+        if (user) {
+          const uniqueNewRecipesForStatusUpdate = newRecipes.filter(nr =>
+            !recipes.some(pr => pr.id === nr.id) // Ensure we are using the current `recipes` state here
+          );
+          if (uniqueNewRecipesForStatusUpdate.length > 0) {
+             await updateSavedRecipeStatusForDisplayedRecipes(uniqueNewRecipesForStatusUpdate);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to load more recipes:", err);
+      setError(err.message || 'Could not fetch more recipes. Please try again later.');
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [isFetchingMore, hasMore, user, updateSavedRecipeStatusForDisplayedRecipes, recipes]); // Added recipes to dependency array
+
   useEffect(() => {
     async function loadInitialData() {
-      if (isAuthLoading) return; // Wait for auth to resolve
+      if (isAuthLoading) return;
 
       setLoading(true);
       setError(null);
+      setInitialLoadAnimationComplete(false); // Reset for initial load
       try {
         const fetchedRecipes = await getRandomRecipes(12);
         setRecipes(fetchedRecipes);
+        if (fetchedRecipes.length < 12) {
+          setHasMore(false);
+        }
         if (user && fetchedRecipes.length > 0) {
           await updateSavedRecipeStatusForDisplayedRecipes(fetchedRecipes);
         }
@@ -64,10 +104,28 @@ export default function HomePage() {
         setError(err.message || 'Could not fetch recipes. Please ensure your API key is correctly configured and try again.');
       } finally {
         setLoading(false);
+        // Trigger animation completion after a slight delay to allow rendering
+        setTimeout(() => setInitialLoadAnimationComplete(true), 50); 
       }
     }
     loadInitialData();
   }, [user, isAuthLoading, updateSavedRecipeStatusForDisplayedRecipes]);
+
+  // Effect for infinite scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      // Trigger loadMoreRecipes when the user is near the bottom of the page
+      // window.innerHeight: The height of the browser window's viewport.
+      // window.scrollY: The number of pixels that the document has already been scrolled vertically.
+      // document.body.offsetHeight: The height of the entire HTML body.
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isFetchingMore && hasMore && !loading) {
+        loadMoreRecipes();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadMoreRecipes, isFetchingMore, hasMore, loading]); // Added loading to dependencies
 
   // Effect to update saved status for the selected recipe in the modal
   useEffect(() => {
@@ -173,7 +231,7 @@ export default function HomePage() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-extrabold mb-12 text-center text-gray-800 tracking-tight">Discover Your Next Meal</h1>
       
-      {recipes.length === 0 && !loading && (
+      {recipes.length === 0 && !loading && !isFetchingMore && (
         <div className="text-center text-gray-600 py-10">
             <p className="text-xl mb-2">No recipes found at the moment.</p>
             <p>This might be due to an API key issue or network problem. Please ensure <code>NEXT_PUBLIC_SPOONACULAR_API_KEY</code> is set in your <code>.env.local</code> file.</p>
@@ -181,14 +239,68 @@ export default function HomePage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-        {recipes.map((recipe) => {
+        {recipes.map((recipe, index) => {
           const currentRecipeId = recipe.id!;
           const isCurrentlySaving = isSaving[currentRecipeId] || false;
           const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
+          
+          // Calculate delay: 0.1s for initial load, 0.05s for subsequent loads
+          // The initialLoadAnimationComplete flag helps differentiate
+          const delayBase = initialLoadAnimationComplete || isFetchingMore ? 0.05 : 0.1;
+          // If fetching more, we need to calculate the index relative to the newly added batch.
+          // This assumes new recipes are appended. If they can be prepended, logic needs adjustment.
+          // For simplicity, if fetching more, apply a minimal delay to all new cards.
+          // A more precise stagger for newly loaded items would require knowing how many items were already animated.
+          
+          // Simpler approach for stagger:
+          // Stagger all visible cards on initial load.
+          // Stagger only newly added cards when loading more.
+          // This requires knowing which cards are "new".
+          // For now, let's apply a simpler stagger based on overall index for initial load,
+          // and a faster, uniform (or minimal stagger) for newly loaded items.
+
+          let animationDelay = '0s';
+          if (!loading && !isFetchingMore) { // Apply to initial set or if not currently fetching more
+             animationDelay = `${index * delayBase}s`;
+          } else if (isFetchingMore) {
+            // For items loaded via "load more", we want them to animate in quickly.
+            // To stagger *only* the new items, we'd need to know the count of `prevRecipes`.
+            // Let's assume `recipes.length - newRecipes.length` was the previous count.
+            // This part is tricky without knowing exactly how `recipes` state updates reflect new items.
+            // A simpler way for "load more" is a very short, uniform delay or rely on the CSS class alone.
+            // For now, let's apply a small fixed delay to newly appearing cards during fetchMore.
+            // This won't be perfectly staggered for *only* new items without more complex index tracking.
+            // A simpler approach: if it's part of a "load more" batch, give it a small fixed delay.
+            // This part needs refinement if perfect staggering of *only* new items is critical.
+            // The current `recipe-card-fade-in` will apply to all, so delay is key.
+
+            // Let's assume new items are appended.
+            // The `index` will be its position in the full `recipes` array.
+            // If we just loaded 8 new items, and there were 12 before, new items are index 12 through 19.
+            // We only want to apply a *new* staggered delay to these.
+            // This is complex because the component re-renders all items.
+            // The easiest is to apply animation class and a *conditional* style for delay.
+
+            // Let's use a simpler logic: if it's beyond the initial batch size (e.g. 12), apply a faster stagger.
+            // This is an approximation.
+            if (index >= (recipes.length - 8) && recipes.length > 12) { // Assuming initial load was 12, subsequent are 8
+                 animationDelay = `${(index - (recipes.length - 8)) * 0.05}s`;
+            } else if (index < 12) { // Initial batch
+                 animationDelay = `${index * 0.1}s`;
+            }
+            // If not initialLoadAnimationComplete, it means it's the first render or a reload.
+            if (!initialLoadAnimationComplete && index < 12) {
+              animationDelay = `${index * 0.1}s`;
+            }
+
+          }
+
+
           return (
             <div 
               key={currentRecipeId} 
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group"
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl sm:columns-2 md:columns-3 lg:columns-4 gap-x-6 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
+              style={{ animationDelay: (!loading && recipes.length > 0) ? animationDelay : '0s' }} 
             >
               <div 
                 className="relative h-56 w-full overflow-hidden cursor-pointer"
@@ -215,12 +327,25 @@ export default function HomePage() {
                 >
                   {recipe.title}
                 </h3>
-                {recipe.readyInMinutes && (
-                  <p className="text-xs text-gray-500 mb-1">Ready in: {recipe.readyInMinutes} mins</p>
-                )}
-                {recipe.servings && (
-                  <p className="text-xs text-gray-500 mb-3">Servings: {recipe.servings}</p>
-                )}
+                <div className="mb-2 space-y-1 text-xs text-gray-500">
+                  {recipe.readyInMinutes && (
+                    <p>Ready in: {recipe.readyInMinutes} mins</p>
+                  )}
+                  {recipe.servings && (
+                    <p>Servings: {recipe.servings}</p>
+                  )}
+                  {recipe.cuisines && recipe.cuisines.length > 0 && (
+                    <p>Cuisine: {recipe.cuisines.join(', ')}</p>
+                  )}
+                  {recipe.diets && recipe.diets.length > 0 && (
+                    <p>Diet: {recipe.diets.join(', ')}</p>
+                  )}
+                  {/* Displaying boolean dietary flags - you might want to format this differently */}
+                  {recipe.vegetarian && <p className="text-green-600">Vegetarian</p>}
+                  {recipe.vegan && <p className="text-green-600">Vegan</p>}
+                  {recipe.glutenFree && <p className="text-blue-600">Gluten-Free</p>}
+                  {recipe.dairyFree && <p className="text-blue-600">Dairy-Free</p>}
+                </div>
                 <div className="mt-auto pt-3">
                   <Button 
                     variant={isRecipeSaved ? "default" : "outline"}
@@ -246,7 +371,9 @@ export default function HomePage() {
         <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
           {modalLoading && (
             <div className="flex justify-center items-center h-96">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500">
+                <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
+              </div>
               <p className="ml-3 text-gray-600">Loading recipe details...</p>
             </div>
           )}

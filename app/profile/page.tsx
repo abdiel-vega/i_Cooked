@@ -47,16 +47,9 @@ export default function ProfilePage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Your Profile</h1>
           {user && user.email && (
-            <p className="text-md text-gray-600 mt-1">Welcome, {user.email}</p>
+            <p className="text-md text-gray-600 mt-1">{user.email}</p>
           )}
         </div>
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          className="mt-4 sm:mt-0"
-        >
-          Logout
-        </Button>
       </div>
       
       {/* Display Saved Recipes */}
