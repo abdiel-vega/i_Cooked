@@ -270,11 +270,12 @@ function SearchResultsPageContent() {
         <p className="text-center text-gray-500 py-8">You've reached the end of the results.</p>
       )}
 
-      {/* Recipe Details Modal (similar to HomePage) */}
+      {/* Recipe Details Modal*/}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
           {modalLoading && (
             <div className="flex justify-center items-center h-96">
+                <DialogTitle className='sr-only'>Loading Recipe Details</DialogTitle>
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div>
               <p className="ml-3 text-gray-600">Loading recipe details...</p>
             </div>

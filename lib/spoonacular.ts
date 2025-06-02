@@ -84,8 +84,8 @@ export interface EquipmentOrIngredient {
 // Search parameters interface
 export interface SearchParams {
   query?: string;
-  cuisine?: string;
-  diet?: string;
+  cuisine?: string | string[]; // Allow string array for cuisines
+  diet?: string | string[]; // Allow string array for diets
   maxReadyTime?: number;
   number?: number;
   offset?: number;
@@ -100,21 +100,34 @@ export async function searchRecipesWithFilters(
   }
 
   try {
-    const searchParams = new URLSearchParams({
+    const searchParamsObj = new URLSearchParams({
       apiKey: API_KEY,
       addRecipeInformation: "true",
       number: (params.number || 12).toString(),
       offset: (params.offset || 0).toString(),
     });
 
-    if (params.query) searchParams.append("query", params.query);
-    if (params.cuisine) searchParams.append("cuisine", params.cuisine);
-    if (params.diet) searchParams.append("diet", params.diet);
+    if (params.query) searchParamsObj.append("query", params.query);
+
+    // Handle array or string for cuisine and diet
+    if (params.cuisine) {
+      const cuisines = Array.isArray(params.cuisine)
+        ? params.cuisine.join(",")
+        : params.cuisine;
+      if (cuisines) searchParamsObj.append("cuisine", cuisines);
+    }
+    if (params.diet) {
+      const diets = Array.isArray(params.diet)
+        ? params.diet.join(",")
+        : params.diet;
+      if (diets) searchParamsObj.append("diet", diets);
+    }
+
     if (params.maxReadyTime)
-      searchParams.append("maxReadyTime", params.maxReadyTime.toString());
+      searchParamsObj.append("maxReadyTime", params.maxReadyTime.toString());
 
     const response = await fetch(
-      `${BASE_URL}/recipes/complexSearch?${searchParams.toString()}`
+      `${BASE_URL}/recipes/complexSearch?${searchParamsObj.toString()}`
     );
 
     if (!response.ok) {
@@ -137,6 +150,33 @@ export async function searchRecipesWithFilters(
     console.error("Failed to search recipes with filters:", error);
     throw error;
   }
+}
+
+// New function for personalized recommendations
+export async function fetchPersonalizedRecipes(params: {
+  cuisines?: string[];
+  diets?: string[];
+  count: number;
+  offset?: number;
+}): Promise<{ recipes: Recipe[]; totalResults: number }> {
+  if (!API_KEY) {
+    return { recipes: [], totalResults: 0 };
+  }
+  if (
+    (!params.cuisines || params.cuisines.length === 0) &&
+    (!params.diets || params.diets.length === 0)
+  ) {
+    // If no preferences, could fall back to random, but for now, let searchRecipesWithFilters handle it (empty search)
+    // Or, alternatively, call getRandomRecipes here. For this implementation, we'll let the caller decide fallback.
+    // console.warn("fetchPersonalizedRecipes called without preferences, may yield broad results or fallback needed.");
+  }
+
+  return searchRecipesWithFilters({
+    cuisine: params.cuisines,
+    diet: params.diets,
+    number: params.count,
+    offset: params.offset,
+  });
 }
 
 // Get recipes by cuisine
