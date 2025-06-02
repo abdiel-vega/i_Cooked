@@ -19,6 +19,7 @@ import {
   checkIsRecipeSaved 
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
+import { RecipeGrid } from '@/components/recipe-grid'; // Added import
 
 export default function HomePage() {
   const { user, isLoading: isAuthLoading } = useAuth() // Get user and auth loading state
@@ -238,133 +239,17 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-        {recipes.map((recipe, index) => {
-          const currentRecipeId = recipe.id!;
-          const isCurrentlySaving = isSaving[currentRecipeId] || false;
-          const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
-          
-          // Calculate delay: 0.1s for initial load, 0.05s for subsequent loads
-          // The initialLoadAnimationComplete flag helps differentiate
-          const delayBase = initialLoadAnimationComplete || isFetchingMore ? 0.05 : 0.1;
-          // If fetching more, we need to calculate the index relative to the newly added batch.
-          // This assumes new recipes are appended. If they can be prepended, logic needs adjustment.
-          // For simplicity, if fetching more, apply a minimal delay to all new cards.
-          // A more precise stagger for newly loaded items would require knowing how many items were already animated.
-          
-          // Simpler approach for stagger:
-          // Stagger all visible cards on initial load.
-          // Stagger only newly added cards when loading more.
-          // This requires knowing which cards are "new".
-          // For now, let's apply a simpler stagger based on overall index for initial load,
-          // and a faster, uniform (or minimal stagger) for newly loaded items.
-
-          let animationDelay = '0s';
-          if (!loading && !isFetchingMore) { // Apply to initial set or if not currently fetching more
-             animationDelay = `${index * delayBase}s`;
-          } else if (isFetchingMore) {
-            // For items loaded via "load more", we want them to animate in quickly.
-            // To stagger *only* the new items, we'd need to know the count of `prevRecipes`.
-            // Let's assume `recipes.length - newRecipes.length` was the previous count.
-            // This part is tricky without knowing exactly how `recipes` state updates reflect new items.
-            // A simpler way for "load more" is a very short, uniform delay or rely on the CSS class alone.
-            // For now, let's apply a small fixed delay to newly appearing cards during fetchMore.
-            // This won't be perfectly staggered for *only* new items without more complex index tracking.
-            // A simpler approach: if it's part of a "load more" batch, give it a small fixed delay.
-            // This part needs refinement if perfect staggering of *only* new items is critical.
-            // The current `recipe-card-fade-in` will apply to all, so delay is key.
-
-            // Let's assume new items are appended.
-            // The `index` will be its position in the full `recipes` array.
-            // If we just loaded 8 new items, and there were 12 before, new items are index 12 through 19.
-            // We only want to apply a *new* staggered delay to these.
-            // This is complex because the component re-renders all items.
-            // The easiest is to apply animation class and a *conditional* style for delay.
-
-            // Let's use a simpler logic: if it's beyond the initial batch size (e.g. 12), apply a faster stagger.
-            // This is an approximation.
-            if (index >= (recipes.length - 8) && recipes.length > 12) { // Assuming initial load was 12, subsequent are 8
-                 animationDelay = `${(index - (recipes.length - 8)) * 0.05}s`;
-            } else if (index < 12) { // Initial batch
-                 animationDelay = `${index * 0.1}s`;
-            }
-            // If not initialLoadAnimationComplete, it means it's the first render or a reload.
-            if (!initialLoadAnimationComplete && index < 12) {
-              animationDelay = `${index * 0.1}s`;
-            }
-
-          }
-
-
-          return (
-            <div 
-              key={currentRecipeId} 
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl sm:columns-2 md:columns-3 lg:columns-4 gap-x-6 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
-              style={{ animationDelay: (!loading && recipes.length > 0) ? animationDelay : '0s' }} 
-            >
-              <div 
-                className="relative h-56 w-full overflow-hidden cursor-pointer"
-                onClick={() => handleRecipeClick(currentRecipeId)}
-              >
-                {recipe.image ? (
-                  <img 
-                    src={recipe.image} 
-                    alt={recipe.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">Image not available</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-5 flex flex-col flex-grow">
-                <h3 
-                  className="font-semibold text-lg mb-2 text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer"
-                  title={recipe.title}
-                  onClick={() => handleRecipeClick(currentRecipeId)}
-                >
-                  {recipe.title}
-                </h3>
-                <div className="mb-2 space-y-1 text-xs text-gray-500">
-                  {recipe.readyInMinutes && (
-                    <p>Ready in: {recipe.readyInMinutes} mins</p>
-                  )}
-                  {recipe.servings && (
-                    <p>Servings: {recipe.servings}</p>
-                  )}
-                  {recipe.cuisines && recipe.cuisines.length > 0 && (
-                    <p>Cuisine: {recipe.cuisines.join(', ')}</p>
-                  )}
-                  {recipe.diets && recipe.diets.length > 0 && (
-                    <p>Diet: {recipe.diets.join(', ')}</p>
-                  )}
-                  {/* Displaying boolean dietary flags - you might want to format this differently */}
-                  {recipe.vegetarian && <p className="text-green-600">Vegetarian</p>}
-                  {recipe.vegan && <p className="text-green-600">Vegan</p>}
-                  {recipe.glutenFree && <p className="text-blue-600">Gluten-Free</p>}
-                  {recipe.dairyFree && <p className="text-blue-600">Dairy-Free</p>}
-                </div>
-                <div className="mt-auto pt-3">
-                  <Button 
-                    variant={isRecipeSaved ? "default" : "outline"}
-                    size="sm"
-                    className="w-full"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleToggleSaveRecipe(recipe); 
-                    }}
-                    disabled={isCurrentlySaving || !user || isAuthLoading} 
-                  >
-                    {isCurrentlySaving ? (isRecipeSaved ? 'Unsaving...' : 'Saving...') : (isRecipeSaved ? 'Unsave Recipe' : 'Save Recipe')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <RecipeGrid
+        recipes={recipes}
+        savedRecipeIds={savedRecipeIds}
+        isSaving={isSaving}
+        onRecipeClick={handleRecipeClick}
+        onToggleSave={handleToggleSaveRecipe}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        gridOverallLoading={loading || isAuthLoading}
+        animationType={!initialLoadAnimationComplete && !isFetchingMore ? 'initial' : 'subsequent'}
+      />
 
       {/* Recipe Details Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
