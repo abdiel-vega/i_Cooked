@@ -84,11 +84,12 @@ export interface EquipmentOrIngredient {
 // Search parameters interface
 export interface SearchParams {
   query?: string;
-  cuisine?: string | string[]; // Allow string array for cuisines
-  diet?: string | string[]; // Allow string array for diets
+  cuisine?: string | string[];
+  diet?: string | string[];
   maxReadyTime?: number;
   number?: number;
   offset?: number;
+  intolerances?: string | string[]; // Added intolerances
 }
 
 // Enhanced search function with filters
@@ -121,6 +122,13 @@ export async function searchRecipesWithFilters(
         ? params.diet.join(",")
         : params.diet;
       if (diets) searchParamsObj.append("diet", diets);
+    }
+
+    if (params.intolerances) {
+      const intolerances = Array.isArray(params.intolerances)
+        ? params.intolerances.join(",")
+        : params.intolerances;
+      if (intolerances) searchParamsObj.append("intolerances", intolerances);
     }
 
     if (params.maxReadyTime)
@@ -156,43 +164,109 @@ export async function searchRecipesWithFilters(
 export async function fetchPersonalizedRecipes(params: {
   cuisines?: string[];
   diets?: string[];
+  intolerances?: string[]; // Added intolerances
   count: number;
   offset?: number;
 }): Promise<{ recipes: Recipe[]; totalResults: number }> {
   if (!API_KEY) {
     return { recipes: [], totalResults: 0 };
   }
-  if (
-    (!params.cuisines || params.cuisines.length === 0) &&
-    (!params.diets || params.diets.length === 0)
-  ) {
-    // If no preferences, could fall back to random, but for now, let searchRecipesWithFilters handle it (empty search)
-    // Or, alternatively, call getRandomRecipes here. For this implementation, we'll let the caller decide fallback.
-    // console.warn("fetchPersonalizedRecipes called without preferences, may yield broad results or fallback needed.");
-  }
+  // No specific warning here, as searchRecipesWithFilters will handle empty searches if all are empty.
 
   return searchRecipesWithFilters({
     cuisine: params.cuisines,
     diet: params.diets,
+    intolerances: params.intolerances, // Pass intolerances
     number: params.count,
     offset: params.offset,
   });
 }
 
+// Get random recipes
+export async function getRandomRecipes(
+  count: number = 12,
+  tags?: string, // Optional: for general tags like vegetarian, dessert etc.
+  intolerances?: string[] // Specific intolerances
+): Promise<Recipe[]> {
+  if (!API_KEY) {
+    return [];
+  }
+  try {
+    const searchParamsObj = new URLSearchParams({
+      apiKey: API_KEY,
+      number: count.toString(),
+      addRecipeInformation: "true", // Ensure we get details like glutenFree, dairyFree
+    });
+    if (tags) searchParamsObj.append("tags", tags);
+    if (intolerances && intolerances.length > 0) {
+      searchParamsObj.append("intolerances", intolerances.join(","));
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/recipes/random?${searchParamsObj.toString()}`
+    );
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Failed to parse error response" }));
+      throw new Error(
+        `API request failed with status ${response.status}: ${
+          errorData.message || response.statusText || "Unknown error"
+        }`
+      );
+    }
+    const data = await response.json();
+    return data.recipes as Recipe[];
+  } catch (error) {
+    console.error("Failed to get random recipes:", error);
+    throw error; // Re-throw to be handled by the caller
+  }
+}
+
 // Get recipes by cuisine
 export async function getRecipesByCuisine(
   cuisine: string,
-  number: number = 12,
-  offset: number = 0
+  count: number = 12,
+  offset: number = 0,
+  intolerances?: string[] // Added intolerances
 ): Promise<{ recipes: Recipe[]; totalResults: number }> {
   return searchRecipesWithFilters({
-    cuisine,
-    number,
-    offset,
+    cuisine: cuisine,
+    number: count,
+    offset: offset,
+    intolerances: intolerances, // Pass intolerances
   });
 }
 
-// Available cuisines list (based on Spoonacular API documentation)
+// Get recipe details
+export async function getRecipeDetails(id: number): Promise<Recipe | null> {
+  if (!API_KEY) {
+    return null;
+  }
+  try {
+    const response = await fetch(
+      `${BASE_URL}/recipes/${id}/information?apiKey=${API_KEY}&includeNutrition=false`
+    );
+    if (!response.ok) {
+      if (response.status === 404) return null; // Recipe not found
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Failed to parse error response" }));
+      throw new Error(
+        `API request failed with status ${response.status}: ${
+          errorData.message || response.statusText || "Unknown error"
+        }`
+      );
+    }
+    const data = await response.json();
+    return data as Recipe;
+  } catch (error) {
+    console.error(`Failed to get recipe details for ID ${id}:`, error);
+    throw error; // Re-throw
+  }
+}
+
+// Constants for Cuisines and Diets (can be expanded)
 export const CUISINES = [
   "African",
   "Asian",
@@ -223,7 +297,6 @@ export const CUISINES = [
   "Vietnamese",
 ];
 
-// Available diets list
 export const DIETS = [
   "Gluten Free",
   "Ketogenic",
@@ -237,101 +310,3 @@ export const DIETS = [
   "Low FODMAP",
   "Whole30",
 ];
-
-export async function getRandomRecipes(number: number = 10): Promise<Recipe[]> {
-  if (!API_KEY) {
-    // console.error('Spoonacular API key is not configured.');
-    // Return an empty array or throw a specific error to be handled by UI
-    return [];
-  }
-  try {
-    const response = await fetch(
-      `${BASE_URL}/recipes/random?apiKey=${API_KEY}&number=${number}`
-    );
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: "Failed to parse error response" }));
-      console.error(
-        "Spoonacular API error (getRandomRecipes):",
-        response.status,
-        errorData
-      );
-      throw new Error(
-        `API request failed with status ${response.status}: ${
-          errorData.message || response.statusText || "Unknown error"
-        }`
-      );
-    }
-    const data = await response.json();
-    return data.recipes as Recipe[];
-  } catch (error) {
-    console.error("Failed to fetch random recipes:", error);
-    throw error; // Re-throw to be caught by the calling component
-  }
-}
-
-export async function getRecipeDetails(id: number): Promise<Recipe | null> {
-  if (!API_KEY) {
-    // console.error('Spoonacular API key is not configured.');
-    return null;
-  }
-  try {
-    const response = await fetch(
-      `${BASE_URL}/recipes/${id}/information?includeNutrition=false&apiKey=${API_KEY}`
-    );
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: "Failed to parse error response" }));
-      console.error(
-        "Spoonacular API error (getRecipeDetails):",
-        response.status,
-        errorData
-      );
-      throw new Error(
-        `API request failed with status ${response.status}: ${
-          errorData.message || response.statusText || "Unknown error"
-        }`
-      );
-    }
-    const data = await response.json();
-    return data as Recipe;
-  } catch (error) {
-    console.error(`Failed to fetch recipe details for id ${id}:`, error);
-    throw error; // Re-throw to be caught by the calling component
-  }
-}
-
-// Keeping searchRecipes function, can be used later or removed if not needed.
-export async function searchRecipes(query: string): Promise<Recipe[]> {
-  if (!API_KEY) {
-    // console.error('Spoonacular API key is not configured.');
-    return [];
-  }
-  try {
-    const response = await fetch(
-      `${BASE_URL}/recipes/complexSearch?apiKey=${API_KEY}&query=${query}&addRecipeInformation=true&number=10` // Added number limit
-    );
-    if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ message: "Failed to parse error response" }));
-      console.error(
-        "Spoonacular API error (searchRecipes):",
-        response.status,
-        errorData
-      );
-      throw new Error(
-        `API request failed with status ${response.status}: ${
-          errorData.message || response.statusText || "Unknown error"
-        }`
-      );
-    }
-    const data = await response.json();
-    return data.results as Recipe[];
-  } catch (error) {
-    console.error(`Failed to search recipes for query "${query}":`, error);
-    throw error; // Re-throw to be caught by the calling component
-  }
-}

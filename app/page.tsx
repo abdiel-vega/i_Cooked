@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getRandomRecipes, Recipe, getRecipeDetails, fetchPersonalizedRecipes } from '@/lib/spoonacular' // Added fetchPersonalizedRecipes
+import { getRandomRecipes, Recipe, getRecipeDetails, fetchPersonalizedRecipes } from '@/lib/spoonacular'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,10 +17,12 @@ import {
   saveRecipeToSupabase, 
   unsaveRecipeFromSupabase, 
   checkIsRecipeSaved,
-  getSavedRecipesFromSupabase // Added import
+  getSavedRecipesFromSupabase
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
 import { RecipeGrid } from '@/components/recipe-grid';
+import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
+import { getUserAllergies } from '@/lib/supabase/profiles';
 
 const INITIAL_RECIPE_COUNT = 12;
 const MORE_RECIPE_COUNT = 8;
@@ -71,6 +73,7 @@ export default function HomePage() {
   const [initialLoadAnimationComplete, setInitialLoadAnimationComplete] = useState(false);
 
   const [userSavedRecipesForAnalysis, setUserSavedRecipesForAnalysis] = useState<Recipe[]>([]);
+  const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
   const [currentPersonalizedOffset, setCurrentPersonalizedOffset] = useState(0);
 
   // Effect to fetch all saved recipes for preference analysis when user logs in
@@ -89,6 +92,24 @@ export default function HomePage() {
       }
     }
     fetchUserSavedRecipes();
+  }, [user, isAuthLoading]);
+
+  // Effect to fetch user allergies
+  useEffect(() => {
+    async function loadUserAllergies() {
+      if (user && !isAuthLoading) {
+        try {
+          const allergies = await getUserAllergies(user.id);
+          setCurrentUserAllergies(allergies);
+        } catch (error) {
+          console.error("Failed to load user allergies on home page:", error);
+          // Potentially toast an error, but avoid blocking UI
+        }
+      } else if (!user) {
+        setCurrentUserAllergies([]); // Clear if user logs out
+      }
+    }
+    loadUserAllergies();
   }, [user, isAuthLoading]);
 
 
@@ -130,16 +151,22 @@ export default function HomePage() {
     if (canPersonalize) {
       preferences = analyzeUserPreferences(userSavedRecipesForAnalysis);
     }
+    
+    const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
 
     const usePersonalizedSearch = preferences && (preferences.topCuisines.length > 0 || preferences.topDiets.length > 0);
+    // Also consider intolerances as a reason to use personalized search if present
+    const shouldAttemptPersonalized = usePersonalizedSearch || (user && intoleranceParams.length > 0);
+
 
     try {
-      if (usePersonalizedSearch) {
+      if (shouldAttemptPersonalized) {
         const offset = isInitialLoad ? 0 : currentPersonalizedOffset;
         const result = await fetchPersonalizedRecipes({
-          cuisines: preferences!.topCuisines,
-          diets: preferences!.topDiets,
-          count: recipeCount + 5, // Fetch a bit more to account for client-side filtering
+          cuisines: preferences?.topCuisines || [], // Use empty array if no cuisine prefs
+          diets: preferences?.topDiets || [],    // Use empty array if no diet prefs
+          intolerances: intoleranceParams,
+          count: recipeCount + 5,
           offset: offset,
         });
         newRawRecipes = result.recipes;
@@ -147,8 +174,9 @@ export default function HomePage() {
         // The API offset for the *next* call for personalized results
         newOffsetForPersonalizedPath = offset + result.recipes.length; 
       } else {
-        // Fallback to random if no strong preferences or no user
-        newRawRecipes = await getRandomRecipes(recipeCount);
+        // Fallback to random if no strong preferences or no user, but still pass intolerances if any (e.g. guest with temp setting - though not implemented yet)
+        // For logged-out users, intoleranceParams will be empty. For logged-in users without saved recipes, it will use their profile allergies.
+        newRawRecipes = await getRandomRecipes(recipeCount, undefined, intoleranceParams);
         // For random, totalResults is unknown. hasMore is based on getting new items.
       }
 
@@ -182,9 +210,11 @@ export default function HomePage() {
          // If initial load yields nothing (e.g. very specific prefs or API issue for random)
          // and it's not just a case of totalResults being 0 for a valid query
          // consider fetching random as a final fallback
-         if(usePersonalizedSearch) { // If personalized search failed to give results, try random once
-            console.log("Personalized search yielded no new recipes, trying random for initial load.");
-            const randomFallbackRecipes = await getRandomRecipes(INITIAL_RECIPE_COUNT);
+         if(shouldAttemptPersonalized) { // If personalized/filtered search failed to give results, try purely random (without intolerances for max results)
+            console.log("Personalized/filtered search yielded no new recipes, trying purely random for initial load.");
+            // For this fallback, we might ignore intolerances to get *any* content, or keep them.
+            // Let's keep intolerances for this fallback too, to respect user settings.
+            const randomFallbackRecipes = await getRandomRecipes(INITIAL_RECIPE_COUNT, undefined, intoleranceParams);
             const trulyUniqueRandom = randomFallbackRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!));
             setRecipes(trulyUniqueRandom);
             setHasMore(trulyUniqueRandom.length > 0);
@@ -209,19 +239,19 @@ export default function HomePage() {
     }
   }, [
     user, isAuthLoading, userSavedRecipesForAnalysis, recipes, 
-    currentPersonalizedOffset, isFetchingMore, hasMore, loading, // Added loading here
-    updateSavedRecipeStatusForDisplayedRecipes
+    currentPersonalizedOffset, isFetchingMore, hasMore, loading,
+    updateSavedRecipeStatusForDisplayedRecipes, currentUserAllergies // Added currentUserAllergies
   ]);
 
   // Effect for initial data load
   useEffect(() => {
-    // This effect should run when auth state is resolved, or when user's saved recipes (for analysis) change.
-    // It ensures that if a user logs in/out or their saved profile changes, we re-evaluate initial recommendations.
     if (!isAuthLoading) {
+      // fetchData depends on currentUserAllergies, so it will use them once available.
+      // It will also run if currentUserAllergies changes (e.g., user updates profile on another tab and state syncs).
       fetchData(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthLoading, user, userSavedRecipesForAnalysis]); // Key dependencies for re-fetching initial data
+  }, [isAuthLoading, user, userSavedRecipesForAnalysis, currentUserAllergies]); // Added currentUserAllergies
 
 
   // Effect for infinite scrolling
@@ -357,8 +387,9 @@ export default function HomePage() {
         onToggleSave={handleToggleSaveRecipe}
         user={user}
         isAuthLoading={isAuthLoading}
-        gridOverallLoading={loading && recipes.length === 0} // Grid is loading if main page is loading AND no recipes yet
+        gridOverallLoading={loading && recipes.length === 0}
         animationType={!initialLoadAnimationComplete && !isFetchingMore ? 'initial' : 'subsequent'}
+        userAllergies={currentUserAllergies} // Pass allergies to grid
       />
 
       {isFetchingMore && (

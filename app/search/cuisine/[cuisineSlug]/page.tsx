@@ -24,8 +24,35 @@ import {
   checkIsRecipeSaved 
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
+// import { RecipeGrid } from '@/components/recipe-grid'; // Not used here
+import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
+import { getUserAllergies } from '@/lib/supabase/profiles';
+import { AlertTriangle } from 'lucide-react'; // For warning icon
 
-const RECIPES_PER_PAGE = 12; // Number of recipes to fetch per call
+const RECIPES_PER_PAGE = 12;
+
+// Helper function to check for allergens in a recipe (similar to RecipeGrid)
+function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0) {
+    return [];
+  }
+  const warnings: string[] = [];
+  userAllergies.forEach(allergy => {
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) warnings.push("Contains Gluten");
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) warnings.push("Contains Dairy");
+        break;
+      case "Wheat":
+        if (recipe.glutenFree === false) warnings.push("May contain Wheat");
+        break;
+    }
+  });
+  return [...new Set(warnings)];
+}
+
 
 export default function CuisinePage() {
   const params = useParams();
@@ -49,6 +76,7 @@ export default function CuisinePage() {
   const [initialLoadAnimationComplete, setInitialLoadAnimationComplete] = useState(false);
   
   const [actualCuisineName, setActualCuisineName] = useState<string | null>(null);
+  const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
 
   useEffect(() => {
     if (cuisineSlug) {
@@ -63,6 +91,25 @@ export default function CuisinePage() {
       }
     }
   }, [cuisineSlug, router]);
+
+  // Effect to fetch user allergies
+  useEffect(() => {
+    async function loadUserAllergies() {
+      if (user && !isAuthLoading) {
+        try {
+          const allergies = await getUserAllergies(user.id);
+          setCurrentUserAllergies(allergies);
+        } catch (error) {
+          console.error("Failed to load user allergies on cuisine page:", error);
+        }
+      } else if (!user) {
+        setCurrentUserAllergies([]);
+      }
+    }
+    if(!isAuthLoading){
+        loadUserAllergies();
+    }
+  }, [user, isAuthLoading]);
 
   const updateSavedRecipeStatusForDisplayedRecipes = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
@@ -84,8 +131,10 @@ export default function CuisinePage() {
     else setIsFetchingMore(true); // Specific state for loading more
 
     setError(null);
+    const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
+
     try {
-      const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset);
+      const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset, intoleranceParams); // Pass intolerances
       setRecipes(prevRecipes => offset === 0 ? data.recipes : [...prevRecipes, ...data.recipes]);
       setTotalResults(data.totalResults);
       
@@ -109,17 +158,18 @@ export default function CuisinePage() {
       }
     }
   // Removed recipes.length from dependencies to break the cycle
-  }, [user, updateSavedRecipeStatusForDisplayedRecipes]); 
+  }, [user, updateSavedRecipeStatusForDisplayedRecipes, currentUserAllergies]); 
 
   useEffect(() => {
-    if (actualCuisineName && !isAuthLoading) {
-      setRecipes([]); // Clear previous recipes if cuisine changes
+    if (actualCuisineName && !isAuthLoading) { // Ensure auth state and allergies are potentially loaded
+      setRecipes([]);
       setCurrentOffset(0);
       setHasMore(true);
       setInitialLoadAnimationComplete(false);
       fetchCuisineRecipes(actualCuisineName, 0);
     }
-  }, [actualCuisineName, isAuthLoading, fetchCuisineRecipes]); // fetchCuisineRecipes added
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualCuisineName, isAuthLoading, currentUserAllergies]); // Removed fetchCuisineRecipes, added currentUserAllergies. User is implied by isAuthLoading for allergy fetch.
 
   const loadMoreRecipes = useCallback(() => {
     if (!isFetchingMore && hasMore && actualCuisineName && !loading) { // Added !loading to prevent concurrent fetches
@@ -241,6 +291,7 @@ export default function CuisinePage() {
           const currentRecipeId = recipe.id!;
           const isCurrentlySaving = isSaving[currentRecipeId] || false;
           const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
+          const allergenWarnings = getRecipeAllergenWarningsCuisine(recipe, currentUserAllergies);
           
           const delayBase = initialLoadAnimationComplete || isFetchingMore ? 0.05 : 0.1;
           let animationDelay = '0s';
@@ -292,6 +343,17 @@ export default function CuisinePage() {
                 >
                   {recipe.title}
                 </h3>
+                {allergenWarnings.length > 0 && (
+                  <div className="mb-1 text-xs text-red-600 bg-red-50 p-1 rounded border border-red-200">
+                    <div className="flex items-center">
+                      <AlertTriangle size={14} className="mr-1 flex-shrink-0" />
+                      <span className="font-medium">Alert:</span>
+                    </div>
+                    <ul className="list-disc list-inside pl-3.5 mt-0.5">
+                      {allergenWarnings.map(warning => <li key={warning}>{warning}</li>)}
+                    </ul>
+                  </div>
+                )}
                 <div className="mb-2 space-y-1 text-xs text-gray-500">
                   {recipe.readyInMinutes && <p>Ready in: {recipe.readyInMinutes} mins</p>}
                   {recipe.servings && <p>Servings: {recipe.servings}</p>}

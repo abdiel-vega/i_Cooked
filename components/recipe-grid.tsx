@@ -1,6 +1,8 @@
 import { Recipe } from '@/lib/spoonacular';
 import { Button } from '@/components/ui/button';
-import { User } from '@supabase/supabase-js'; // Or your custom User type from AuthContext
+import { User } from '@supabase/supabase-js';
+import { Allergen } from '@/lib/allergens'; // Import Allergen type
+import { AlertTriangle } from 'lucide-react'; // For warning icon
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -10,11 +12,48 @@ interface RecipeGridProps {
   onToggleSave: (recipe: Recipe) => void;
   user: User | null | undefined;
   isAuthLoading: boolean;
-  gridOverallLoading: boolean; // True if parent page is generally loading
-  animationType: 'initial' | 'subsequent'; // Controls animation stagger type
+  gridOverallLoading: boolean;
+  animationType: 'initial' | 'subsequent';
+  userAllergies?: Allergen[]; // Added userAllergies prop
 }
 
 const ANIMATION_BATCH_SIZE = 12;
+
+// Helper function to check for allergens in a recipe
+function getRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0) {
+    return [];
+  }
+  const warnings: string[] = [];
+
+  userAllergies.forEach(allergy => {
+    let found = false;
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) warnings.push("Contains Gluten"); // Explicitly false
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) warnings.push("Contains Dairy"); // Explicitly false
+        break;
+      case "Wheat":
+        // If glutenFree is false, it might contain wheat. This is an assumption.
+        // Spoonacular's `intolerances=Wheat` filter is more reliable.
+        if (recipe.glutenFree === false) warnings.push("May contain Wheat");
+        break;
+      // For other allergens, Spoonacular's basic recipe object doesn't have direct true/false flags.
+      // The API filtering (intolerances) is the primary defense.
+      // We avoid adding generic warnings here as they might be inaccurate or noisy
+      // if the API has already filtered out recipes with those intolerances.
+      // Example:
+      // case "Peanut":
+      //   // if (recipe.ingredients?.some(ing => ing.name.toLowerCase().includes("peanut"))) 
+      //   // warnings.push("May contain Peanuts (check ingredients)");
+      //   break;
+    }
+  });
+  return [...new Set(warnings)]; // Remove duplicate warnings
+}
+
 
 export function RecipeGrid({
   recipes,
@@ -26,6 +65,7 @@ export function RecipeGrid({
   isAuthLoading,
   gridOverallLoading,
   animationType,
+  userAllergies = [], // Default to empty array
 }: RecipeGridProps) {
   if (recipes.length === 0 && !gridOverallLoading) {
     return null; // Parent component should handle "no recipes" message
@@ -34,9 +74,10 @@ export function RecipeGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
       {recipes.map((recipe, index) => {
-        const currentRecipeId = recipe.id!; // Assuming recipe.id is always present
+        const currentRecipeId = recipe.id!;
         const isCurrentlySaving = isSaving[currentRecipeId] || false;
         const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
+        const allergenWarnings = getRecipeAllergenWarnings(recipe, userAllergies);
 
         let calculatedAnimationDelay = '0s';
         if (!gridOverallLoading && recipes.length > 0) {
@@ -80,6 +121,17 @@ export function RecipeGrid({
               >
                 {recipe.title}
               </h3>
+              {allergenWarnings.length > 0 && (
+                <div className="mb-2 text-xs text-red-600 bg-red-50 p-1.5 rounded-md border border-red-200">
+                  <div className="flex items-center">
+                    <AlertTriangle size={14} className="mr-1 flex-shrink-0" />
+                    <span className="font-medium">Allergy Alert:</span>
+                  </div>
+                  <ul className="list-disc list-inside pl-4 mt-0.5">
+                    {allergenWarnings.map(warning => <li key={warning}>{warning}</li>)}
+                  </ul>
+                </div>
+              )}
               <div className="mb-2 space-y-1 text-xs text-gray-500">
                 {recipe.readyInMinutes && (
                   <p>Ready in: {recipe.readyInMinutes} mins</p>

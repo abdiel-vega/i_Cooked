@@ -20,9 +20,35 @@ import {
 } from '@/lib/supabase/recipes'; 
 import { toast } from "sonner";
 import Link from 'next/link';
-import { RecipeGrid } from '@/components/recipe-grid'; // Added import
+// import { RecipeGrid } from '@/components/recipe-grid'; // Not used here, page has its own grid
+import { Allergen, getAllergenQueryValue, COMMON_ALLERGENS as ALL_ALLERGENS_LIST } from '@/lib/allergens';
+import { getUserAllergies } from '@/lib/supabase/profiles';
+import { AlertTriangle } from 'lucide-react'; // For warning icon
 
 const RECIPES_PER_PAGE = 12;
+
+// Helper function to check for allergens in a recipe (similar to RecipeGrid)
+function getRecipeAllergenWarningsResults(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0) {
+    return [];
+  }
+  const warnings: string[] = [];
+  userAllergies.forEach(allergy => {
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) warnings.push("Contains Gluten");
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) warnings.push("Contains Dairy");
+        break;
+      case "Wheat":
+        if (recipe.glutenFree === false) warnings.push("May contain Wheat");
+        break;
+    }
+  });
+  return [...new Set(warnings)];
+}
+
 
 function SearchResultsPageContent() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -42,6 +68,7 @@ function SearchResultsPageContent() {
   const [totalResults, setTotalResults] = useState(0);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
 
   const query = searchParams.get('query') || undefined;
   const cuisine = searchParams.get('cuisine') || undefined;
@@ -66,6 +93,26 @@ function SearchResultsPageContent() {
     setSavedRecipeIds(newSavedIds);
   }, [user, savedRecipeIds]);
 
+  // Effect to fetch user allergies
+  useEffect(() => {
+    async function loadUserAllergies() {
+      if (user && !isAuthLoading) {
+        try {
+          const allergies = await getUserAllergies(user.id);
+          setCurrentUserAllergies(allergies);
+        } catch (error) {
+          console.error("Failed to load user allergies on search results page:", error);
+        }
+      } else if (!user) {
+        setCurrentUserAllergies([]);
+      }
+    }
+    // Fetch allergies when auth state is resolved
+    if(!isAuthLoading) {
+        loadUserAllergies();
+    }
+  }, [user, isAuthLoading]);
+
   const fetchRecipes = useCallback(async (offset: number, initialFetch: boolean = false) => {
     if (initialFetch) {
       setLoading(true);
@@ -77,11 +124,14 @@ function SearchResultsPageContent() {
     }
     setError(null);
 
+    const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
+
     const searchApiParams: SearchParams = {
       query,
       cuisine,
       diet,
       maxReadyTime,
+      intolerances: intoleranceParams, // Pass intolerances
       number: RECIPES_PER_PAGE,
       offset,
     };
@@ -101,13 +151,17 @@ function SearchResultsPageContent() {
       setIsFetchingMore(false);
       if (initialFetch) setInitialLoadComplete(true);
     }
-  }, [query, cuisine, diet, maxReadyTime, user, updateSavedRecipeStatus]);
+  }, [query, cuisine, diet, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]);
 
   useEffect(() => {
-    // Trigger initial fetch when search params change
-    setInitialLoadComplete(false); // Reset for new search
-    fetchRecipes(0, true);
-  }, [query, cuisine, diet, maxReadyTime]); // Removed fetchRecipes from here to avoid loop, it's called inside
+    // Trigger initial fetch when search params change OR when allergies are loaded (if user is logged in and auth is resolved)
+    setInitialLoadComplete(false);
+    if (!isAuthLoading) { // Ensure auth state is resolved before fetching
+        fetchRecipes(0, true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, cuisine, diet, maxReadyTime, currentUserAllergies, isAuthLoading]); // Removed 'user' as isAuthLoading covers its resolution for allergy fetching. fetchRecipes itself depends on user for saved status.
+
 
    useEffect(() => {
     if (!initialLoadComplete || recipes.length === 0 || isFetchingMore || recipes.length >= totalResults) return;
@@ -247,17 +301,92 @@ function SearchResultsPageContent() {
         </div>
       )}
 
-      <RecipeGrid
-        recipes={recipes}
-        savedRecipeIds={savedRecipeIds}
-        isSaving={isSaving}
-        onRecipeClick={handleRecipeClick}
-        onToggleSave={handleToggleSaveRecipe}
-        user={user}
-        isAuthLoading={isAuthLoading}
-        gridOverallLoading={loading && !initialLoadComplete} // Grid is loading if initial fetch is happening
-        animationType={!initialLoadComplete ? 'initial' : 'subsequent'}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+        {recipes.map((recipe, index) => {
+          const currentRecipeId = recipe.id!;
+          const isCurrentlySaving = isSaving[currentRecipeId] || false;
+          const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
+          const allergenWarnings = getRecipeAllergenWarningsResults(recipe, currentUserAllergies);
+          // Basic animation for newly loaded items
+          const animationDelay = `${(index % RECIPES_PER_PAGE) * 0.05}s`;
+
+          return (
+            <div 
+              key={`${currentRecipeId}-${index}`} // Ensure unique key if IDs could repeat across fetches (though unlikely here)
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
+              style={{ animationDelay: animationDelay }} 
+            >
+              <div 
+                className="relative h-56 w-full overflow-hidden cursor-pointer"
+                onClick={() => handleRecipeClick(currentRecipeId)}
+              >
+                {recipe.image ? (
+                  <img 
+                    src={recipe.image} 
+                    alt={recipe.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">Image not available</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-5 flex flex-col flex-grow">
+                <h3 
+                  className="font-semibold text-lg mb-2 text-gray-900 truncate group-hover:text-orange-600 transition-colors cursor-pointer"
+                  title={recipe.title}
+                  onClick={() => handleRecipeClick(currentRecipeId)}
+                >
+                  {recipe.title}
+                </h3>
+                {allergenWarnings.length > 0 && (
+                  <div className="mb-1 text-xs text-red-600 bg-red-50 p-1 rounded border border-red-200">
+                    <div className="flex items-center">
+                      <AlertTriangle size={14} className="mr-1 flex-shrink-0" />
+                      <span className="font-medium">Alert:</span>
+                    </div>
+                    <ul className="list-disc list-inside pl-3.5 mt-0.5">
+                      {allergenWarnings.map(warning => <li key={warning}>{warning}</li>)}
+                    </ul>
+                  </div>
+                )}
+                <div className="mb-2 space-y-1 text-xs text-gray-500">
+                  {recipe.readyInMinutes && (
+                    <p>Ready in: {recipe.readyInMinutes} mins</p>
+                  )}
+                  {recipe.servings && (
+                    <p>Servings: {recipe.servings}</p>
+                  )}
+                  {recipe.cuisines && recipe.cuisines.length > 0 && (
+                    <p>Cuisine: {recipe.cuisines.join(', ')}</p>
+                  )}
+                  {recipe.diets && recipe.diets.length > 0 && (
+                    <p>Diet: {recipe.diets.join(', ')}</p>
+                  )}
+                  {/* Displaying boolean dietary flags - you might want to format this differently */}
+                  {recipe.vegetarian && <p className="text-green-600">Vegetarian</p>}
+                  {recipe.vegan && <p className="text-green-600">Vegan</p>}
+                  {recipe.glutenFree && <p className="text-blue-600">Gluten-Free</p>}
+                  {recipe.dairyFree && <p className="text-blue-600">Dairy-Free</p>}
+                </div>
+                <div className="mt-auto pt-3">
+                  <Button 
+                    variant={isRecipeSaved ? "default" : "outline"}
+                    size="sm"
+                    className="w-full"
+                    onClick={(e) => { e.stopPropagation(); handleToggleSaveRecipe(recipe); }}
+                    disabled={isCurrentlySaving || !user || isAuthLoading} 
+                  >
+                    {isCurrentlySaving ? (isRecipeSaved ? 'Unsaving...' : 'Saving...') : (isRecipeSaved ? 'Unsave' : 'Save')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {isFetchingMore && (
         <div className="flex justify-center items-center py-8">
@@ -270,12 +399,11 @@ function SearchResultsPageContent() {
         <p className="text-center text-gray-500 py-8">You've reached the end of the results.</p>
       )}
 
-      {/* Recipe Details Modal*/}
+      {/* Recipe Details Modal (similar to HomePage) */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
           {modalLoading && (
             <div className="flex justify-center items-center h-96">
-                <DialogTitle className='sr-only'>Loading Recipe Details</DialogTitle>
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-orange-500"></div>
               <p className="ml-3 text-gray-600">Loading recipe details...</p>
             </div>
