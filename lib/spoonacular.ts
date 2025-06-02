@@ -81,6 +81,123 @@ export interface EquipmentOrIngredient {
   };
 }
 
+// Search parameters interface
+export interface SearchParams {
+  query?: string;
+  cuisine?: string;
+  diet?: string;
+  maxReadyTime?: number;
+  number?: number;
+  offset?: number;
+}
+
+// Enhanced search function with filters
+export async function searchRecipesWithFilters(
+  params: SearchParams
+): Promise<{ recipes: Recipe[]; totalResults: number }> {
+  if (!API_KEY) {
+    return { recipes: [], totalResults: 0 };
+  }
+
+  try {
+    const searchParams = new URLSearchParams({
+      apiKey: API_KEY,
+      addRecipeInformation: "true",
+      number: (params.number || 12).toString(),
+      offset: (params.offset || 0).toString(),
+    });
+
+    if (params.query) searchParams.append("query", params.query);
+    if (params.cuisine) searchParams.append("cuisine", params.cuisine);
+    if (params.diet) searchParams.append("diet", params.diet);
+    if (params.maxReadyTime)
+      searchParams.append("maxReadyTime", params.maxReadyTime.toString());
+
+    const response = await fetch(
+      `${BASE_URL}/recipes/complexSearch?${searchParams.toString()}`
+    );
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: "Failed to parse error response" }));
+      throw new Error(
+        `API request failed with status ${response.status}: ${
+          errorData.message || response.statusText || "Unknown error"
+        }`
+      );
+    }
+
+    const data = await response.json();
+    return {
+      recipes: data.results as Recipe[],
+      totalResults: data.totalResults || 0,
+    };
+  } catch (error) {
+    console.error("Failed to search recipes with filters:", error);
+    throw error;
+  }
+}
+
+// Get recipes by cuisine
+export async function getRecipesByCuisine(
+  cuisine: string,
+  number: number = 12,
+  offset: number = 0
+): Promise<{ recipes: Recipe[]; totalResults: number }> {
+  return searchRecipesWithFilters({
+    cuisine,
+    number,
+    offset,
+  });
+}
+
+// Available cuisines list (based on Spoonacular API documentation)
+export const CUISINES = [
+  "African",
+  "Asian",
+  "American",
+  "British",
+  "Cajun",
+  "Caribbean",
+  "Chinese",
+  "Eastern European",
+  "European",
+  "French",
+  "German",
+  "Greek",
+  "Indian",
+  "Irish",
+  "Italian",
+  "Japanese",
+  "Jewish",
+  "Korean",
+  "Latin American",
+  "Mediterranean",
+  "Mexican",
+  "Middle Eastern",
+  "Nordic",
+  "Southern",
+  "Spanish",
+  "Thai",
+  "Vietnamese",
+];
+
+// Available diets list
+export const DIETS = [
+  "Gluten Free",
+  "Ketogenic",
+  "Vegetarian",
+  "Lacto-Vegetarian",
+  "Ovo-Vegetarian",
+  "Vegan",
+  "Pescetarian",
+  "Paleo",
+  "Primal",
+  "Low FODMAP",
+  "Whole30",
+];
+
 export async function getRandomRecipes(number: number = 10): Promise<Recipe[]> {
   if (!API_KEY) {
     // console.error('Spoonacular API key is not configured.');
