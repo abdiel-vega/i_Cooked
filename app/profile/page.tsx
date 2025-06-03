@@ -134,8 +134,8 @@ export default function ProfilePage() {
           <div>
             <h3 className="text-lg font-medium mb-3">Allergy Preferences</h3>
             <p className="text-sm text-gray-500 mb-3">
-              Select any allergies you have. Recipes containing these allergens will be filtered out where possible,
-              and warnings may be displayed.
+              Select any allergies you have. Recipes containing these allergens will be filtered out of the home reccomendations,
+              and warnings will be displayed while searching recipes.
             </p>
             <div className="space-y-3">
               {COMMON_ALLERGENS.map((allergen) => (

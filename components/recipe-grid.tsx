@@ -24,34 +24,24 @@ function getRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | u
   if (!userAllergies || userAllergies.length === 0) {
     return [];
   }
-  const warnings: string[] = [];
+  const triggeredAllergens: string[] = [];
 
   userAllergies.forEach(allergy => {
-    let found = false;
     switch (allergy) {
       case "Gluten":
-        if (recipe.glutenFree === false) warnings.push("Contains Gluten"); // Explicitly false
+        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
         break;
       case "Dairy":
-        if (recipe.dairyFree === false) warnings.push("Contains Dairy"); // Explicitly false
+        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
         break;
       case "Wheat":
         // If glutenFree is false, it might contain wheat. This is an assumption.
-        // Spoonacular's `intolerances=Wheat` filter is more reliable.
-        if (recipe.glutenFree === false) warnings.push("May contain Wheat");
+        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
-      // For other allergens, Spoonacular's basic recipe object doesn't have direct true/false flags.
-      // The API filtering (intolerances) is the primary defense.
-      // We avoid adding generic warnings here as they might be inaccurate or noisy
-      // if the API has already filtered out recipes with those intolerances.
-      // Example:
-      // case "Peanut":
-      //   // if (recipe.ingredients?.some(ing => ing.name.toLowerCase().includes("peanut"))) 
-      //   // warnings.push("May contain Peanuts (check ingredients)");
-      //   break;
+      // Add other cases based on available recipe properties
     }
   });
-  return [...new Set(warnings)]; // Remove duplicate warnings
+  return [...new Set(triggeredAllergens)]; // Return names of allergens
 }
 
 
@@ -122,14 +112,10 @@ export function RecipeGrid({
                 {recipe.title}
               </h3>
               {allergenWarnings.length > 0 && (
-                <div className="mb-2 text-xs text-red-600 bg-red-50 p-1.5 rounded-md border border-red-200">
-                  <div className="flex items-center">
-                    <AlertTriangle size={14} className="mr-1 flex-shrink-0" />
-                    <span className="font-medium">Allergy Alert:</span>
-                  </div>
-                  <ul className="list-disc list-inside pl-4 mt-0.5">
-                    {allergenWarnings.map(warning => <li key={warning}>{warning}</li>)}
-                  </ul>
+                <div className="mb-2 text-xs text-red-600 bg-red-50 p-1.5 rounded-md border border-red-200 flex items-center">
+                  <AlertTriangle size={14} className="mr-1.5 flex-shrink-0" />
+                  <span className="font-medium">Allergy Alert:</span>&nbsp;
+                  <span className="truncate">{allergenWarnings.join(', ')}</span>
                 </div>
               )}
               <div className="mb-2 space-y-1 text-xs text-gray-500">

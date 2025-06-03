@@ -24,6 +24,35 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Allergen } from '@/lib/allergens'; // Import Allergen type
+import { getUserAllergies } from '@/lib/supabase/profiles'; // Import getUserAllergies
+import { AlertTriangle } from 'lucide-react'; // For warning icon
+
+// Helper function to check for allergens in a recipe for the modal
+function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0 || !recipe) {
+    return [];
+  }
+  const triggeredAllergens: string[] = [];
+  userAllergies.forEach(allergy => {
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
+        break;
+      case "Wheat":
+        // This is a basic check. Spoonacular's `intolerances=Wheat` filter is more reliable if filtering.
+        // For display purposes, if glutenFree is false, it might contain wheat.
+        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
+        break;
+      // Add more cases if your SpoonacularRecipe type includes other direct boolean flags for allergens
+    }
+  });
+  return [...new Set(triggeredAllergens)]; // Return names of allergens
+}
+
 
 export default function SavedRecipesList() {
   const { user, isLoading: isAuthLoading } = useAuth(); // Added isAuthLoading
@@ -36,6 +65,7 @@ export default function SavedRecipesList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
   
   // State for managing saved status within this component, especially for the modal
   const [componentSavedRecipeIds, setComponentSavedRecipeIds] = useState<Set<number>>(new Set());
@@ -79,6 +109,25 @@ export default function SavedRecipesList() {
         fetchSavedRecipes();
     }
   }, [user, isAuthLoading, fetchAndSetInitialSavedIds]);
+
+  // Effect to fetch user allergies
+  useEffect(() => {
+    async function loadUserAllergies() {
+      if (user && !isAuthLoading) {
+        try {
+          const allergies = await getUserAllergies(user.id);
+          setCurrentUserAllergies(allergies);
+        } catch (error) {
+          console.error("Failed to load user allergies in saved recipes:", error);
+          // Optionally set an error state for allergies
+        }
+      } else if (!user && !isAuthLoading) { // Clear allergies if user logs out or auth is resolved without user
+        setCurrentUserAllergies([]);
+      }
+    }
+    loadUserAllergies();
+  }, [user, isAuthLoading]);
+
 
   // Effect to update saved status for the selected recipe in the modal
   useEffect(() => {
@@ -316,6 +365,22 @@ export default function SavedRecipesList() {
                     />
                   </div>
                 )}
+
+                {/* Allergen Warnings in Modal */}
+                {(() => {
+                  const allergenWarningsInModal = getRecipeAllergenWarningsForModal(selectedRecipeDetail, currentUserAllergies);
+                  if (allergenWarningsInModal.length > 0) {
+                    return (
+                      <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-red-700 flex items-center text-sm">
+                        <AlertTriangle size={18} className="mr-2 flex-shrink-0 text-red-600" />
+                        <span className="font-semibold text-red-800">Allergy Alert:</span>&nbsp;
+                        <span className="text-red-700">{allergenWarningsInModal.join(', ')}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {selectedRecipeDetail.summary && (
                     <div>
                         <h4 className="font-semibold text-lg mb-1 text-gray-700">Summary:</h4>

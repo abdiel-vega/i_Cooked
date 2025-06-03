@@ -33,24 +33,25 @@ const RECIPES_PER_PAGE = 12;
 
 // Helper function to check for allergens in a recipe (similar to RecipeGrid)
 function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
-  if (!userAllergies || userAllergies.length === 0) {
+  if (!userAllergies || userAllergies.length === 0 || !recipe) {
     return [];
   }
-  const warnings: string[] = [];
+  const triggeredAllergens: string[] = [];
   userAllergies.forEach(allergy => {
     switch (allergy) {
       case "Gluten":
-        if (recipe.glutenFree === false) warnings.push("Contains Gluten");
+        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
         break;
       case "Dairy":
-        if (recipe.dairyFree === false) warnings.push("Contains Dairy");
+        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
         break;
       case "Wheat":
-        if (recipe.glutenFree === false) warnings.push("May contain Wheat");
+        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
+      // Add other cases based on available recipe properties
     }
   });
-  return [...new Set(warnings)];
+  return [...new Set(triggeredAllergens)]; // Return names of allergens
 }
 
 
@@ -131,10 +132,11 @@ export default function CuisinePage() {
     else setIsFetchingMore(true); // Specific state for loading more
 
     setError(null);
-    const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
+    // const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy)); // Removed for displaying warnings
 
     try {
-      const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset, intoleranceParams); // Pass intolerances
+      // const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset, intoleranceParams); // Pass intolerances
+      const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset); // Removed intoleranceParams
       setRecipes(prevRecipes => offset === 0 ? data.recipes : [...prevRecipes, ...data.recipes]);
       setTotalResults(data.totalResults);
       
@@ -344,14 +346,10 @@ export default function CuisinePage() {
                   {recipe.title}
                 </h3>
                 {allergenWarnings.length > 0 && (
-                  <div className="mb-1 text-xs text-red-600 bg-red-50 p-1 rounded border border-red-200">
-                    <div className="flex items-center">
-                      <AlertTriangle size={14} className="mr-1 flex-shrink-0" />
-                      <span className="font-medium">Alert:</span>
-                    </div>
-                    <ul className="list-disc list-inside pl-3.5 mt-0.5">
-                      {allergenWarnings.map(warning => <li key={warning}>{warning}</li>)}
-                    </ul>
+                  <div className="mb-1 text-xs text-red-600 bg-red-50 p-1 rounded border border-red-200 flex items-center">
+                    <AlertTriangle size={14} className="mr-1.5 flex-shrink-0" />
+                    <span className="font-medium">Allergy Alert:</span>&nbsp;
+                    <span className="truncate">{allergenWarnings.join(', ')}</span>
                   </div>
                 )}
                 <div className="mb-2 space-y-1 text-xs text-gray-500">
@@ -422,6 +420,22 @@ export default function CuisinePage() {
                     <img src={selectedRecipe.image} alt={selectedRecipe.title} className="w-full h-full object-cover"/>
                   </div>
                 )}
+
+                {/* Allergen Warnings in Modal */}
+                {(() => {
+                  const allergenWarningsInModal = getRecipeAllergenWarningsCuisine(selectedRecipe, currentUserAllergies);
+                  if (allergenWarningsInModal.length > 0) {
+                    return (
+                      <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-red-700 flex items-center text-sm">
+                        <AlertTriangle size={18} className="mr-2 flex-shrink-0 text-red-600" />
+                        <span className="font-semibold text-red-800">Allergy Alert:</span>&nbsp;
+                        <span className="text-red-700">{allergenWarningsInModal.join(', ')}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {selectedRecipe.summary && (
                     <div>
                         <h4 className="font-semibold text-lg mb-1 text-gray-700">Summary:</h4>
