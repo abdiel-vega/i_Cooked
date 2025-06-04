@@ -2,7 +2,7 @@ import { Recipe } from '@/lib/spoonacular';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { Allergen } from '@/lib/allergens'; // Import Allergen type
-import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
+import { AlertTriangle, ImageIcon, LeafyGreen, MilkOff, Vegan, Wheat, WheatOff } from 'lucide-react'; // For warning icon
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -83,7 +83,7 @@ export function RecipeGrid({
         return (
           <div
             key={currentRecipeId}
-            className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
+            className="bg-muted rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
             style={{ animationDelay: calculatedAnimationDelay }}
           >
             <div
@@ -97,7 +97,7 @@ export function RecipeGrid({
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-500 group-hover:scale-110">
+                <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110">
                   <ImageIcon size={40} className="mb-2" />
                   <p className="text-sm text-center font-semibold">{recipe.title}</p>
                 </div>
@@ -106,7 +106,7 @@ export function RecipeGrid({
 
             <div className="p-5 flex flex-col flex-grow">
               <h3
-                className="font-semibold text-lg mb-2 text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer"
+                className="font-semibold text-lg mb-2 text-foreground truncate group-hover:text-accent transition-colors cursor-pointer"
                 title={recipe.title}
                 onClick={() => onRecipeClick(currentRecipeId)}
               >
@@ -119,7 +119,7 @@ export function RecipeGrid({
                   <span className="truncate">{allergenWarnings.join(', ')}</span>
                 </div>
               )}
-              <div className="mb-2 space-y-1 text-xs text-gray-500">
+              <div className="mb-2 space-y-1 text-xs text-muted-foreground">
                 {recipe.readyInMinutes && (
                   <p>Ready in: {recipe.readyInMinutes} mins</p>
                 )}
@@ -130,10 +130,30 @@ export function RecipeGrid({
                 {recipe.diets && recipe.diets.length > 0 && (
                   <p>Diet: {recipe.diets.join(', ')}</p>
                 )}
-                {recipe.vegetarian && <p className="text-green-600">Vegetarian</p>}
-                {recipe.vegan && <p className="text-green-600">Vegan</p>}
-                {recipe.glutenFree && <p className="text-blue-600">Gluten-Free</p>}
-                {recipe.dairyFree && <p className="text-blue-600">Dairy-Free</p>}
+                {recipe.vegetarian && (
+                  <div className="flex items-center gap-1">
+                    <p className="text-green-500">Vegetarian</p>
+                    <LeafyGreen className="text-green-500" size={14} />
+                  </div>
+                )}
+                {recipe.vegan && (
+                  <div className="flex items-center gap-1">
+                    <p className="text-emerald-500">Vegan</p>
+                    <Vegan className="text-emerald-500" size={14} />
+                  </div>
+                )}
+                {recipe.glutenFree && (
+                  <div className="flex items-center gap-1">
+                    <p className="text-orange-400">Gluten-Free</p>
+                    <WheatOff className="text-orange-500" size={14} />
+                  </div>
+                )}
+                {recipe.dairyFree && (
+                  <div className="flex items-center gap-1">
+                    <p className="text-blue-400">Dairy-Free</p>
+                    <MilkOff className="text-blue-500" size={14} />
+                  </div>
+                )}
               </div>
               <div className="mt-auto pt-3">
                 <Button

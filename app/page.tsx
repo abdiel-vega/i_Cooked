@@ -423,13 +423,13 @@ export default function HomePage() {
 
       {isFetchingMore && (
         <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="ml-3 text-gray-600">Loading more recipes...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent"></div>
+          <p className="ml-3 text-foreground">Loading more recipes...</p>
         </div>
       )}
 
       {!hasMore && recipes.length > 0 && !isFetchingMore && (
-         <p className="text-center text-gray-500 py-8">You've seen all available recipes for now!</p>
+         <p className="text-center text-muted-foreground py-8">You've seen all available recipes for now!</p>
       )}
 
       {/* Recipe Details Modal */}
@@ -437,10 +437,10 @@ export default function HomePage() {
         <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
           {modalLoading && (
             <div className="flex justify-center items-center h-96">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent">
                 <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
               </div>
-              <p className="ml-3 text-gray-600">Loading recipe details...</p>
+              <p className="ml-3 text-foreground">Loading recipe details...</p>
             </div>
           )}
           {modalError && !modalLoading && (
@@ -448,16 +448,16 @@ export default function HomePage() {
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold text-red-600">Error</DialogTitle>
               </DialogHeader>
-              <p className="text-gray-700 mt-2 mb-6">{modalError}</p>
+              <p className="text-foreground mt-2 mb-6">{modalError}</p>
               <DialogClose asChild>
-                <Button variant="outline">Close</Button>
+                <Button>Close</Button>
               </DialogClose>
             </div>
           )}
           {selectedRecipe && !modalLoading && !modalError && (
             <>
               <DialogHeader className="p-6 border-b">
-                <DialogTitle className="text-2xl font-bold text-gray-800">{selectedRecipe.title}</DialogTitle>
+                <DialogTitle className="text-2xl font-bold text-accent">{selectedRecipe.title}</DialogTitle>
               </DialogHeader>
               <div className="overflow-y-auto flex-grow p-6 space-y-5">
                 {selectedRecipe.image && (
@@ -471,15 +471,15 @@ export default function HomePage() {
                 )}
                 {selectedRecipe.summary && (
                     <div>
-                        <h4 className="font-semibold text-lg mb-1 text-gray-700">Summary:</h4>
-                        <div className="prose prose-sm max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
+                        <h4 className="font-semibold text-lg mb-1 text-accent">Summary:</h4>
+                        <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
                     </div>
                 )}
                 
                 {selectedRecipe.extendedIngredients && selectedRecipe.extendedIngredients.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-lg mb-2 text-gray-700">Ingredients:</h4>
-                    <ul className="list-disc list-inside pl-4 space-y-1 text-gray-600">
+                    <h4 className="font-semibold text-lg mb-2 text-accent">Ingredients:</h4>
+                    <ul className="list-disc list-inside pl-4 space-y-1 text-foreground">
                       {selectedRecipe.extendedIngredients.map(ingredient => (
                         <li key={ingredient.id || ingredient.name} className="text-sm">{ingredient.original}</li>
                       ))}
@@ -489,11 +489,11 @@ export default function HomePage() {
 
                 {selectedRecipe.analyzedInstructions && selectedRecipe.analyzedInstructions.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-lg mt-3 mb-2 text-gray-700">Instructions:</h4>
+                    <h4 className="font-semibold text-lg mt-3 mb-2 text-accent">Instructions:</h4>
                     {selectedRecipe.analyzedInstructions.map((instructionSet, index) => (
                       <div key={index} className="mb-4">
-                        {instructionSet.name && <h5 className="font-medium text-md mb-1 text-gray-700">{instructionSet.name}</h5>}
-                        <ol className="list-decimal list-inside pl-4 space-y-1.5 text-gray-600 text-sm">
+                        {instructionSet.name && <h5 className="font-medium text-md mb-1 text-foreground">{instructionSet.name}</h5>}
+                        <ol className="list-decimal list-inside pl-4 space-y-1.5 text-foreground text-sm">
                           {instructionSet.steps.map(step => (
                             <li key={step.number}>{step.step}</li>
                           ))}
@@ -503,7 +503,7 @@ export default function HomePage() {
                   </div>
                 )}
                 {!selectedRecipe.summary && (!selectedRecipe.extendedIngredients || selectedRecipe.extendedIngredients.length === 0) && (!selectedRecipe.analyzedInstructions || selectedRecipe.analyzedInstructions.length === 0) && (
-                    <p className="text-gray-600">Detailed information for this recipe is not available.</p>
+                    <p className="text-foreground">Detailed information for this recipe is not available.</p>
                 )}
               </div>
               <DialogFooter className="p-6 border-t flex justify-end space-x-2">
@@ -518,7 +518,7 @@ export default function HomePage() {
                   {selectedRecipe && isSaving[selectedRecipe.id!] ? (savedRecipeIds.has(selectedRecipe.id!) ? 'Unsaving...' : 'Saving...') : (selectedRecipe && savedRecipeIds.has(selectedRecipe.id!) ? 'Unsave Recipe' : 'Save Recipe')}
                 </Button>
                 <DialogClose asChild>
-                  <Button variant="outline">Close</Button>
+                  <Button>Close</Button>
                 </DialogClose>
               </DialogFooter>
             </>
