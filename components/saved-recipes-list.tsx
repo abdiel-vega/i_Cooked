@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/dialog";
 import { Allergen } from '@/lib/allergens'; // Import Allergen type
 import { getUserAllergies } from '@/lib/supabase/profiles'; // Import getUserAllergies
-import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
+import { AlertTriangle, ImageIcon, ShoppingCart } from 'lucide-react'; // For warning icon & shopping cart
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
+import { Label } from "@/components/ui/label"; // Import Label
 
 // Helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
@@ -54,7 +56,13 @@ function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllerg
 }
 
 
-export default function SavedRecipesList() {
+export default function SavedRecipesList({
+  selectedRecipeIdsForShoppingList,
+  onToggleRecipeForShoppingList,
+}: {
+  selectedRecipeIdsForShoppingList?: Set<number>;
+  onToggleRecipeForShoppingList?: (recipe: SpoonacularRecipe) => void;
+}) {
   const { user, isLoading: isAuthLoading } = useAuth(); // Added isAuthLoading
   const [savedRecipes, setSavedRecipes] = useState<SpoonacularRecipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,9 +102,22 @@ export default function SavedRecipesList() {
       setLoading(true);
       setError(null);
       try {
-        const recipes = await getSavedRecipesFromSupabase(user.id);
-        setSavedRecipes(recipes);
-        await fetchAndSetInitialSavedIds(recipes); // Initialize saved IDs based on fetched recipes
+        const recipesFromSupabase = await getSavedRecipesFromSupabase(user.id);
+        
+        // De-duplicate recipesFromSupabase by ID
+        const seenRecipeIds = new Set<number>();
+        const uniqueRecipes = recipesFromSupabase.filter(recipe => {
+          if (recipe.id == null) return false;
+          if (seenRecipeIds.has(recipe.id)) {
+            console.warn(`Duplicate saved recipe ID ${recipe.id} found and removed from display.`);
+            return false;
+          }
+          seenRecipeIds.add(recipe.id);
+          return true;
+        });
+
+        setSavedRecipes(uniqueRecipes);
+        await fetchAndSetInitialSavedIds(uniqueRecipes); // Initialize saved IDs based on fetched recipes
       } catch (err: any) {
         console.error('Failed to fetch saved recipes:', err);
         setError(err.message || 'Could not load your saved recipes.');
@@ -293,32 +314,47 @@ export default function SavedRecipesList() {
         {savedRecipes.map(recipe => (
           <Card 
             key={recipe.id} 
-            className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer group"
-            onClick={() => handleRecipeCardClick(recipe.id)}
+            className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
+            // onClick is removed from Card to allow checkbox interaction without opening modal
           >
-            <CardHeader className="p-0 relative h-48 w-full">
-              {recipe.image ? (
-                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-              ) : (
-                <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-300 group-hover:scale-105">
-                  <ImageIcon size={40} className="mb-2" />
-                  <p className="text-sm text-center font-semibold">{recipe.title}</p>
+            <div onClick={() => handleRecipeCardClick(recipe.id)} className="cursor-pointer">
+              <CardHeader className="p-0 relative h-48 w-full">
+                {recipe.image ? (
+                  <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-300 group-hover:scale-105">
+                    <ImageIcon size={40} className="mb-2" />
+                    <p className="text-sm text-center font-semibold">{recipe.title}</p>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="p-4 flex-grow">
+                <CardTitle className="text-lg font-semibold mb-2 truncate group-hover:text-blue-600" title={recipe.title}>{recipe.title}</CardTitle>
+                {recipe.summary && (
+                  <p className="text-sm text-gray-600 line-clamp-3" dangerouslySetInnerHTML={{ __html: recipe.summary.length > 100 ? recipe.summary.substring(0,100) + '...': recipe.summary}} />
+                )}
+              </CardContent>
+            </div>
+            <CardFooter className="p-4 border-t flex-col space-y-2">
+              {onToggleRecipeForShoppingList && selectedRecipeIdsForShoppingList && (
+                <div className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-50 transition-colors">
+                  <Checkbox
+                    id={`shopping-list-${recipe.id}`}
+                    checked={selectedRecipeIdsForShoppingList.has(recipe.id)}
+                    onCheckedChange={() => onToggleRecipeForShoppingList(recipe)}
+                    aria-label={`Select ${recipe.title} for shopping list`}
+                  />
+                  <Label htmlFor={`shopping-list-${recipe.id}`} className="text-sm font-medium text-gray-700 cursor-pointer flex-grow">
+                    Add to Shopping List
+                  </Label>
+                  <ShoppingCart size={16} className="text-gray-500" />
                 </div>
               )}
-            </CardHeader>
-            <CardContent className="p-4 flex-grow">
-              <CardTitle className="text-lg font-semibold mb-2 truncate group-hover:text-blue-600" title={recipe.title}>{recipe.title}</CardTitle>
-              {/* You can add more details here if stored, e.g., recipe.readyInMinutes */}
-              {recipe.summary && (
-                <p className="text-sm text-gray-600 line-clamp-3" dangerouslySetInnerHTML={{ __html: recipe.summary.length > 100 ? recipe.summary.substring(0,100) + '...': recipe.summary}} />
-              )}
-            </CardContent>
-            <CardFooter className="p-4 border-t">
               <Button 
                 variant="destructive" 
                 className="w-full"
                 onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click from triggering modal
+                    e.stopPropagation(); 
                     handleUnsaveRecipeCard(recipe.id, recipe.title);
                 }}
               >

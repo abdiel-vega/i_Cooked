@@ -136,7 +136,19 @@ export default function CuisinePage() {
 
     try {
       // const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset, intoleranceParams); // Pass intolerances
-      const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset); // Removed intoleranceParams
+      const rawData = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset); // Removed intoleranceParams
+      
+      // De-duplicate rawData.recipes by ID
+      const seenRecipeIds = new Set<number>();
+      const uniqueFetchedRecipes = rawData.recipes.filter(recipe => {
+        if (recipe.id == null) return false;
+        if (seenRecipeIds.has(recipe.id)) return false;
+        seenRecipeIds.add(recipe.id);
+        return true;
+      });
+
+      const data = { ...rawData, recipes: uniqueFetchedRecipes };
+      
       setRecipes(prevRecipes => offset === 0 ? data.recipes : [...prevRecipes, ...data.recipes]);
       setTotalResults(data.totalResults);
       

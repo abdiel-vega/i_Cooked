@@ -202,8 +202,20 @@ export default function HomePage() {
         newRawRecipes = await getRandomRecipes(recipeCount, undefined, intoleranceParams);
       }
 
+      // De-duplicate newRawRecipes by ID before any further processing
+      const seenIdsForRaw = new Set<number>();
+      const deDupedNewRawRecipes = newRawRecipes.filter(r => {
+        if (r.id == null) return false; 
+        if (seenIdsForRaw.has(r.id)) return false;
+        seenIdsForRaw.add(r.id);
+        return true;
+      });
+      newRawRecipes = deDupedNewRawRecipes; // Use the de-duplicated list
+
       const currentDisplayedRecipeIds = new Set(isInitialLoad ? [] : recipes.map(r => r.id!));
-      const uniqueNewRecipes = newRawRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!)).slice(0, recipeCount);
+      const uniqueNewRecipes = newRawRecipes
+        .filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!))
+        .slice(0, recipeCount);
 
 
       if (isInitialLoad) {
@@ -256,7 +268,7 @@ export default function HomePage() {
     }
   }, [
     user, userSavedRecipesForAnalysis, currentUserAllergies, 
-    currentPersonalizedOffset, hasMore, recipes, // recipes is needed for currentDisplayedRecipeIds for "load more"
+    currentPersonalizedOffset, hasMore, recipes, 
     updateSavedRecipeStatusForDisplayedRecipes, isFetchingMore
   ]);
 
