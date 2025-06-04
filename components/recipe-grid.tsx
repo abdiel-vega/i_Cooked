@@ -2,7 +2,7 @@ import { Recipe } from '@/lib/spoonacular';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { Allergen } from '@/lib/allergens'; // Import Allergen type
-import { AlertTriangle } from 'lucide-react'; // For warning icon
+import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -97,8 +97,9 @@ export function RecipeGrid({
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                  <p className="text-gray-500 text-sm">Image not available</p>
+                <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-500 group-hover:scale-110">
+                  <ImageIcon size={40} className="mb-2" />
+                  <p className="text-sm text-center font-semibold">{recipe.title}</p>
                 </div>
               )}
             </div>

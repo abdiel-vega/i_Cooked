@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Allergen } from '@/lib/allergens'; // Import Allergen type
 import { getUserAllergies } from '@/lib/supabase/profiles'; // Import getUserAllergies
-import { AlertTriangle } from 'lucide-react'; // For warning icon
+import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
 
 // Helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
@@ -300,8 +300,9 @@ export default function SavedRecipesList() {
               {recipe.image ? (
                 <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <p className="text-gray-500">No image</p>
+                <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-300 group-hover:scale-105">
+                  <ImageIcon size={40} className="mb-2" />
+                  <p className="text-sm text-center font-semibold">{recipe.title}</p>
                 </div>
               )}
             </CardHeader>

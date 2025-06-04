@@ -27,7 +27,7 @@ import { toast } from "sonner"
 // import { RecipeGrid } from '@/components/recipe-grid'; // Not used here
 import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { AlertTriangle } from 'lucide-react'; // For warning icon
+import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
 
 const RECIPES_PER_PAGE = 12;
 
@@ -331,8 +331,9 @@ export default function CuisinePage() {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">Image not available</p>
+                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-500 group-hover:scale-110">
+                    <ImageIcon size={40} className="mb-2" />
+                    <p className="text-sm text-center font-semibold">{recipe.title}</p>
                   </div>
                 )}
               </div>

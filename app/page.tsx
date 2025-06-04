@@ -76,40 +76,67 @@ export default function HomePage() {
   const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
   const [currentPersonalizedOffset, setCurrentPersonalizedOffset] = useState(0);
 
+  // State to manage loading of initial dependencies
+  const [dataDepsStatus, setDataDepsStatus] = useState({
+    authResolved: false,
+    savedRecipesFetched: false, // True if user exists and fetch is done, or if no user
+    allergiesFetched: false,   // True if user exists and fetch is done, or if no user
+  });
+  const [initialFetchInitiated, setInitialFetchInitiated] = useState(false);
+
+
+  // Effect for auth resolution
+  useEffect(() => {
+    if (!isAuthLoading) {
+      setDataDepsStatus(prev => ({ ...prev, authResolved: true }));
+    }
+  }, [isAuthLoading]);
+
   // Effect to fetch all saved recipes for preference analysis when user logs in
   useEffect(() => {
     async function fetchUserSavedRecipes() {
-      if (user && !isAuthLoading) {
+      if (user) { // Only fetch if user exists
         try {
           const saved = await getSavedRecipesFromSupabase(user.id);
           setUserSavedRecipesForAnalysis(saved);
         } catch (error) {
           console.error("Failed to fetch saved recipes for analysis:", error);
           setUserSavedRecipesForAnalysis([]); // Reset on error
+        } finally {
+          setDataDepsStatus(prev => ({ ...prev, savedRecipesFetched: true }));
         }
-      } else if (!user) {
-        setUserSavedRecipesForAnalysis([]); // Clear if user logs out
+      } else { // No user
+        setUserSavedRecipesForAnalysis([]);
+        setDataDepsStatus(prev => ({ ...prev, savedRecipesFetched: true }));
       }
     }
-    fetchUserSavedRecipes();
+
+    if (!isAuthLoading) { // Ensure auth is resolved before attempting
+      fetchUserSavedRecipes();
+    }
   }, [user, isAuthLoading]);
 
   // Effect to fetch user allergies
   useEffect(() => {
     async function loadUserAllergies() {
-      if (user && !isAuthLoading) {
+      if (user) { // Only fetch if user exists
         try {
-          const allergies = await getUserAllergies(user.id);
-          setCurrentUserAllergies(allergies);
+          const allergiesData = await getUserAllergies(user.id);
+          setCurrentUserAllergies(allergiesData);
         } catch (error) {
           console.error("Failed to load user allergies on home page:", error);
-          // Potentially toast an error, but avoid blocking UI
+          setCurrentUserAllergies([]);
+        } finally {
+          setDataDepsStatus(prev => ({ ...prev, allergiesFetched: true }));
         }
-      } else if (!user) {
-        setCurrentUserAllergies([]); // Clear if user logs out
+      } else { // No user
+        setCurrentUserAllergies([]);
+        setDataDepsStatus(prev => ({ ...prev, allergiesFetched: true }));
       }
     }
-    loadUserAllergies();
+    if (!isAuthLoading) { // Ensure auth is resolved
+      loadUserAllergies();
+    }
   }, [user, isAuthLoading]);
 
 
@@ -134,16 +161,16 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       setInitialLoadAnimationComplete(false);
-      setCurrentPersonalizedOffset(0); // Reset offset for initial personalized load
-    } else {
-      if (isFetchingMore || !hasMore) return;
+      // currentPersonalizedOffset is reset based on logic below
+    } else { // Loading more
+      if (isFetchingMore || !hasMore) return; // isFetchingMore is component state
       setIsFetchingMore(true);
     }
 
     const recipeCount = isInitialLoad ? INITIAL_RECIPE_COUNT : MORE_RECIPE_COUNT;
     let newRawRecipes: Recipe[] = [];
     let apiTotalResults: number | undefined = undefined;
-    let newOffsetForPersonalizedPath: number = currentPersonalizedOffset;
+    let newOffsetForPersonalizedPath: number = isInitialLoad ? 0 : currentPersonalizedOffset;
 
     const canPersonalize = user && userSavedRecipesForAnalysis.length > 0;
     let preferences: { topCuisines: string[], topDiets: string[] } | null = null;
@@ -154,71 +181,61 @@ export default function HomePage() {
     
     const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
 
-    const usePersonalizedSearch = preferences && (preferences.topCuisines.length > 0 || preferences.topDiets.length > 0);
-    // Also consider intolerances as a reason to use personalized search if present
-    const shouldAttemptPersonalized = usePersonalizedSearch || (user && intoleranceParams.length > 0);
+    const usePersonalizedSearchLogic = preferences && (preferences.topCuisines.length > 0 || preferences.topDiets.length > 0);
+    const shouldAttemptPersonalized = usePersonalizedSearchLogic || (user && intoleranceParams.length > 0);
 
 
     try {
       if (shouldAttemptPersonalized) {
-        const offset = isInitialLoad ? 0 : currentPersonalizedOffset;
+        const offsetToUse = isInitialLoad ? 0 : currentPersonalizedOffset;
         const result = await fetchPersonalizedRecipes({
-          cuisines: preferences?.topCuisines || [], // Use empty array if no cuisine prefs
-          diets: preferences?.topDiets || [],    // Use empty array if no diet prefs
+          cuisines: preferences?.topCuisines || [],
+          diets: preferences?.topDiets || [],
           intolerances: intoleranceParams,
-          count: recipeCount + 5,
-          offset: offset,
+          count: recipeCount + 5, // Fetch a bit more to allow for filtering duplicates
+          offset: offsetToUse,
         });
         newRawRecipes = result.recipes;
         apiTotalResults = result.totalResults;
-        // The API offset for the *next* call for personalized results
-        newOffsetForPersonalizedPath = offset + result.recipes.length; 
+        newOffsetForPersonalizedPath = offsetToUse + result.recipes.length;
       } else {
-        // Fallback to random if no strong preferences or no user, but still pass intolerances if any (e.g. guest with temp setting - though not implemented yet)
-        // For logged-out users, intoleranceParams will be empty. For logged-in users without saved recipes, it will use their profile allergies.
         newRawRecipes = await getRandomRecipes(recipeCount, undefined, intoleranceParams);
-        // For random, totalResults is unknown. hasMore is based on getting new items.
       }
 
-      const currentDisplayedRecipeIds = new Set(recipes.map(r => r.id!));
+      const currentDisplayedRecipeIds = new Set(isInitialLoad ? [] : recipes.map(r => r.id!));
       const uniqueNewRecipes = newRawRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!)).slice(0, recipeCount);
 
 
       if (isInitialLoad) {
         setRecipes(uniqueNewRecipes);
-        if (usePersonalizedSearch) {
+        if (shouldAttemptPersonalized) {
           setCurrentPersonalizedOffset(newOffsetForPersonalizedPath);
-          // Check against totalResults if available from personalized search
-          setHasMore(uniqueNewRecipes.length > 0 && (uniqueNewRecipes.length < (apiTotalResults ?? Infinity)));
+          setHasMore(uniqueNewRecipes.length > 0 && (newOffsetForPersonalizedPath < (apiTotalResults ?? Infinity)));
         } else {
-          setHasMore(uniqueNewRecipes.length > 0); // For random, assume more if we got some
+          setHasMore(uniqueNewRecipes.length > 0);
         }
       } else { // Loading more
         setRecipes(prev => [...prev, ...uniqueNewRecipes]);
-        if (usePersonalizedSearch) {
+        if (shouldAttemptPersonalized) {
           setCurrentPersonalizedOffset(newOffsetForPersonalizedPath);
-          setHasMore(uniqueNewRecipes.length > 0 && (recipes.length + uniqueNewRecipes.length < (apiTotalResults ?? Infinity)));
+          setHasMore(uniqueNewRecipes.length > 0 && (currentPersonalizedOffset + uniqueNewRecipes.length < (apiTotalResults ?? Infinity)));
         } else {
-          setHasMore(uniqueNewRecipes.length > 0); // For random, if we got new items, assume more
+          setHasMore(uniqueNewRecipes.length > 0);
         }
       }
       
       if (uniqueNewRecipes.length > 0) {
         await updateSavedRecipeStatusForDisplayedRecipes(uniqueNewRecipes);
       }
-      if (isInitialLoad && uniqueNewRecipes.length === 0 && (apiTotalResults === 0 || !usePersonalizedSearch)) {
-         // If initial load yields nothing (e.g. very specific prefs or API issue for random)
-         // and it's not just a case of totalResults being 0 for a valid query
-         // consider fetching random as a final fallback
-         if(shouldAttemptPersonalized) { // If personalized/filtered search failed to give results, try purely random (without intolerances for max results)
+
+      if (isInitialLoad && uniqueNewRecipes.length === 0 && (apiTotalResults === 0 || !shouldAttemptPersonalized)) {
+         if(shouldAttemptPersonalized) {
             console.log("Personalized/filtered search yielded no new recipes, trying purely random for initial load.");
-            // For this fallback, we might ignore intolerances to get *any* content, or keep them.
-            // Let's keep intolerances for this fallback too, to respect user settings.
             const randomFallbackRecipes = await getRandomRecipes(INITIAL_RECIPE_COUNT, undefined, intoleranceParams);
-            const trulyUniqueRandom = randomFallbackRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!));
+            const trulyUniqueRandom = randomFallbackRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!)); // currentDisplayedRecipeIds is empty here
             setRecipes(trulyUniqueRandom);
             setHasMore(trulyUniqueRandom.length > 0);
-            setCurrentPersonalizedOffset(0); // Reset as we switched to random
+            setCurrentPersonalizedOffset(0); 
             if (trulyUniqueRandom.length > 0) {
                 await updateSavedRecipeStatusForDisplayedRecipes(trulyUniqueRandom);
             }
@@ -228,7 +245,7 @@ export default function HomePage() {
     } catch (err: any) {
       console.error("Failed to fetch recipes:", err);
       setError(err.message || 'Could not fetch recipes.');
-      setHasMore(false); // Stop fetching on error
+      setHasMore(false);
     } finally {
       if (isInitialLoad) {
         setLoading(false);
@@ -238,20 +255,20 @@ export default function HomePage() {
       }
     }
   }, [
-    user, isAuthLoading, userSavedRecipesForAnalysis, recipes, 
-    currentPersonalizedOffset, isFetchingMore, hasMore, loading,
-    updateSavedRecipeStatusForDisplayedRecipes, currentUserAllergies // Added currentUserAllergies
+    user, userSavedRecipesForAnalysis, currentUserAllergies, 
+    currentPersonalizedOffset, hasMore, recipes, // recipes is needed for currentDisplayedRecipeIds for "load more"
+    updateSavedRecipeStatusForDisplayedRecipes, isFetchingMore
   ]);
 
-  // Effect for initial data load
+  // Effect for initial data load, depends on all dependencies being ready
   useEffect(() => {
-    if (!isAuthLoading) {
-      // fetchData depends on currentUserAllergies, so it will use them once available.
-      // It will also run if currentUserAllergies changes (e.g., user updates profile on another tab and state syncs).
+    const { authResolved, savedRecipesFetched, allergiesFetched } = dataDepsStatus;
+    if (authResolved && savedRecipesFetched && allergiesFetched && !initialFetchInitiated) {
       fetchData(true);
+      setInitialFetchInitiated(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthLoading, user, userSavedRecipesForAnalysis, currentUserAllergies]); // Added currentUserAllergies
+  }, [dataDepsStatus, initialFetchInitiated, fetchData]);
 
 
   // Effect for infinite scrolling
@@ -347,7 +364,7 @@ export default function HomePage() {
     }
   };
 
-  if (loading && recipes.length === 0) { // Show main loader only if loading and no recipes yet
+  if (loading && recipes.length === 0 && !initialFetchInitiated) { // Show main loader only if initial fetch not even initiated and no recipes
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
         <p className="text-2xl font-semibold text-gray-700 mb-4">Loading delicious recipes...</p>
