@@ -397,12 +397,12 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-extrabold mb-12 text-center text-gray-800 tracking-tight">
-        {user && userSavedRecipesForAnalysis.length > 0 ? "Recipes For You" : "Discover Your Next Meal"}
+      <h1 className="text-4xl font-extrabold mb-12 text-center text-foreground tracking-tight">
+        {user && userSavedRecipesForAnalysis.length > 0 ? "Recipes For You" : "Prepare Your Next Meal"}
       </h1>
       
       {recipes.length === 0 && !loading && !isFetchingMore && (
-        <div className="text-center text-gray-600 py-10">
+        <div className="text-center text-muted-foreground py-10">
             <p className="text-xl mb-2">No recipes found at the moment.</p>
             <p>This might be due to an API key issue or network problem. Please ensure <code>NEXT_PUBLIC_SPOONACULAR_API_KEY</code> is set in your <code>.env.local</code> file.</p>
         </div>
@@ -446,17 +446,14 @@ export default function HomePage() {
           {modalError && !modalLoading && (
             <div className="p-8 text-center">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold text-red-600">Error</DialogTitle>
+                <DialogTitle className="text-xl font-semibold text-destructive">Error</DialogTitle>
               </DialogHeader>
               <p className="text-foreground mt-2 mb-6">{modalError}</p>
-              <DialogClose asChild>
-                <Button>Close</Button>
-              </DialogClose>
             </div>
           )}
           {selectedRecipe && !modalLoading && !modalError && (
             <>
-              <DialogHeader className="p-6 border-b">
+              <DialogHeader className="p-6 border-1 border-b border-muted">
                 <DialogTitle className="text-2xl font-bold text-accent">{selectedRecipe.title}</DialogTitle>
               </DialogHeader>
               <div className="overflow-y-auto flex-grow p-6 space-y-5">
