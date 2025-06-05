@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-background text-accent shadow hover:bg-accent hover:text-accent-foreground",
+          "bg-muted text-accent shadow hover:bg-accent hover:text-accent-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-md hover:bg-background hover:text-destructive",
         outline:
-          "border bg-background text-accent shadow-md hover:bg-accent hover:text-accent-foreground hover: border-accent-foreground",
+          "border border-accent bg-background text-accent shadow-md hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -22,7 +22,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
+        sm: "h-8 rounded-md px-3 text-md",
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9",
       },
