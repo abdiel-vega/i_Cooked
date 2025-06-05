@@ -11,7 +11,7 @@ const SearchBar = ({ value, onChange }: { value: string; onChange: (value: strin
   <input
     type="text"
     placeholder="Search recipes, ingredients..."
-    className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+    className="p-3 bg-background text-foreground rounded-lg w-full focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
     aria-label="Search recipes"
     value={value}
     onChange={(e) => onChange(e.target.value)}
@@ -33,12 +33,12 @@ const FilterDropdown = ({
   onChange: (value: string) => void;
 }) => (
   <div className="flex flex-col">
-    <label htmlFor={id} className="mb-1 text-sm font-medium text-gray-700">
+    <label htmlFor={id} className="mb-1 text-sm font-medium text-foreground">
       {label}:
     </label>
     <select
       id={id}
-      className="p-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+      className="p-2 rounded-lg bg-background focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >
@@ -84,12 +84,12 @@ export default function SearchPage() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Discover Recipes</h1>
-        <p className="text-lg text-gray-600">Find your next favorite meal with our extensive recipe collection.</p>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Discover Recipes</h1>
+        <p className="text-lg text-foreground">Find your next favorite meal with our extensive recipe collection.</p>
       </header>
 
       {/* Search Bar and Filters Section */}
-      <section className="mb-10 p-6 bg-gray-50 rounded-xl shadow-lg">
+      <section className="mb-10 p-6 bg-muted rounded-xl shadow-lg">
         <div className="mb-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
@@ -99,7 +99,7 @@ export default function SearchPage() {
           <FilterDropdown label="Max Ready Time (min)" options={READY_TIME_OPTIONS} id="ready-time-filter" value={selectedReadyTime} onChange={setSelectedReadyTime} />
         </div>
         <Button 
-          className="mt-6 w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+          className="mt-6 w-full bg-primary hover:bg-accent text-background font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
           onClick={handleSearch}
         >
           Search Recipes
@@ -108,15 +108,15 @@ export default function SearchPage() {
 
       {/* Cuisine Sections */}
       <section>
-        <h2 className="text-3xl font-semibold mb-6 text-gray-700">Browse by Cuisine</h2>
+        <h2 className="text-3xl font-semibold mb-6 text-foreground">Browse by Cuisine</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {CUISINES.map((cuisine) => (
             <Link
               key={cuisine}
               href={`/search/cuisine/${encodeURIComponent(cuisine.toLowerCase().replace(/\s+/g, '-'))}`}
-              className="group block p-4 bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200 hover:border-orange-400"
+              className="group block p-4 bg-muted rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-muted hover:border-accent"
             >
-              <h3 className="text-md sm:text-lg font-medium text-gray-800 group-hover:text-orange-600 transition-colors duration-300 text-center">
+              <h3 className="text-md sm:text-lg font-medium text-foreground group-hover:text-accent transition-colors duration-300 text-center">
                 {cuisine}
               </h3>
             </Link>
