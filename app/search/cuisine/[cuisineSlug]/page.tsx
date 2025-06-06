@@ -9,14 +9,6 @@ import {
   CUISINES 
 } from '@/lib/spoonacular'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
 import { useAuth } from '@/app/contexts/auth-context'
 import { 
   saveRecipeToSupabase, 
@@ -26,9 +18,8 @@ import {
 import { toast } from "sonner"
 // import { RecipeGrid } from '@/components/recipe-grid'; // Not used here
 import { RecipeGrid } from '@/components/recipe-grid'; // Import RecipeGrid
-import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
+import { Allergen } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
 import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
 
 const RECIPES_PER_PAGE = 12;
@@ -269,8 +260,8 @@ export default function CuisinePage() {
   if (loading || (isAuthLoading && recipes.length === 0)) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-2xl font-semibold text-gray-700 mb-4">Loading {actualCuisineName || 'cuisine'} recipes...</p>
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="text-2xl font-semibold text-foreground mb-4">Loading {actualCuisineName || 'cuisine'} recipes...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -278,8 +269,8 @@ export default function CuisinePage() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-red-600 mb-3">Oops! Something went wrong.</h2>
-        <p className="text-md text-gray-700 mb-6 max-w-md">{error}</p>
+        <h2 className="text-2xl font-semibold text-destructive mb-3">Oops! Something went wrong.</h2>
+        <p className="text-md text-foreground mb-6 max-w-md">{error}</p>
         <Button onClick={() => actualCuisineName && fetchCuisineRecipes(actualCuisineName, 0)}>Try Again</Button>
         <Button variant="link" onClick={() => router.push('/search')} className="mt-2">Back to Search</Button>
       </div>
@@ -291,12 +282,12 @@ export default function CuisinePage() {
       <Button onClick={() => router.back()} className="mb-6 text-md">
         &larr; Back to Search
       </Button>
-      <h1 className="text-4xl font-extrabold mb-12 text-center text-gray-800 tracking-tight">
+      <h1 className="text-4xl font-extrabold mb-12 text-center text-foreground tracking-tight">
         {actualCuisineName ? `${actualCuisineName} Recipes` : 'Cuisine Recipes'}
       </h1>
       
       {recipes.length === 0 && !loading && !isFetchingMore && (
-        <div className="text-center text-gray-600 py-10">
+        <div className="text-center text-foreground py-10">
             <p className="text-xl mb-2">No {actualCuisineName} recipes found.</p>
             <p>Try a different cuisine or check back later!</p>
         </div>
@@ -317,13 +308,13 @@ export default function CuisinePage() {
 
       {isFetchingMore && (
         <div className="flex justify-center items-center py-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="ml-3 text-gray-600">Loading more recipes...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent"></div>
+          <p className="ml-3 text-foreground">Loading more recipes...</p>
         </div>
       )}
 
       {!hasMore && recipes.length > 0 && (
-        <p className="text-center text-gray-500 py-10">You've reached the end of {actualCuisineName} recipes!</p>
+        <p className="text-center text-muted-foreground py-10">You've reached the end of {actualCuisineName} recipes!</p>
       )}
 
       {/* Recipe Details Modal (same as homepage) */}

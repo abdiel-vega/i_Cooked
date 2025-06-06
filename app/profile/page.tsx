@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 // Import getRecipeDetails
-import { Recipe as SpoonacularRecipe, Ingredient, getRecipeDetails } from '@/lib/spoonacular'; 
+import { Recipe as SpoonacularRecipe, getRecipeDetails } from '@/lib/spoonacular'; 
 import { ClipboardCopy, Printer, RefreshCw, Trash2 } from 'lucide-react'; // Icons
 
 export interface ShoppingListItem {
@@ -296,8 +296,8 @@ export default function ProfilePage() {
   if (authLoading || (user && !initialAllergiesLoaded)) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="ml-3 text-gray-600">Loading profile...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+        <p className="ml-3 text-foreground">Loading profile...</p>
       </div>
     );
   }
@@ -307,8 +307,8 @@ export default function ProfilePage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">Access Denied</h2>
-          <p className="mt-2 text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Access Denied</h2>
+          <p className="mt-2 text-foreground">
             You must be logged in to view this page.
           </p>
           <Button onClick={() => router.push('/auth/login')} className="mt-4">
@@ -457,24 +457,26 @@ export default function ProfilePage() {
       `}</style>
       <Card className="max-w-2xl mx-auto mb-10 no-print">
         <CardHeader>
-          <CardTitle className="text-2xl">Your Profile</CardTitle>
-          <CardDescription>Manage your account settings and preferences.</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-2xl">Your Profile</CardTitle>
+              <CardDescription className='text-muted-foreground'>Manage your account settings and preferences.</CardDescription>
+            </div>
+            <div className="ml-auto bg-background border border-primary px-3 py-1 rounded-md">
+              <p className="text-sm text-foreground">{user.email}</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="text-lg font-medium mb-1">Email</h3>
-            <p className="text-sm text-gray-600">{user.email}</p>
-          </div>
-          
-          <div>
             <h3 className="text-lg font-medium mb-3">Allergy Preferences</h3>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-foreground mb-3">
               Select any allergies you have. Recipes with these allergens will show warnings, and personalized recommendations may consider them.
             </p>
             <div className="space-y-3">
               {COMMON_ALLERGENS.map((allergen) => (
-                <div key={allergen} className="flex items-center justify-between p-3 border rounded-md bg-gray-50/50">
-                  <Label htmlFor={`allergy-${allergen}`} className="text-sm font-medium text-gray-700">
+                <div key={allergen} className="flex items-center justify-between p-3 border border-background rounded-md bg-background transition duration-300 ease-in-out hover:-translate-y-1 hover:scale-105 hover:border-accent">
+                  <Label htmlFor={`allergy-${allergen}`} className="text-sm font-medium text-foreground">
                     {allergen}
                   </Label>
                   <Switch
@@ -506,6 +508,7 @@ export default function ProfilePage() {
             </div>
           )}
           <Button 
+            variant="outline"
             onClick={generateShoppingList} 
             disabled={isGeneratingList || selectedRecipesForList.size === 0}
             className="w-full sm:w-auto no-print" 
@@ -536,7 +539,7 @@ export default function ProfilePage() {
                   <Button variant="outline" size="sm" onClick={handlePrintShoppingList} aria-label="Print list">
                     <Printer className="h-4 w-4 mr-1" /> Print
                   </Button>
-                   <Button variant="ghost" size="sm" onClick={handleClearShoppingList} aria-label="Clear list" className="text-red-500 hover:text-red-600">
+                   <Button variant="destructive" size="sm" onClick={handleClearShoppingList} aria-label="Clear list">
                     <Trash2 className="h-4 w-4 mr-1" /> Clear
                   </Button>
                 </div>
