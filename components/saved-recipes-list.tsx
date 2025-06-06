@@ -9,26 +9,19 @@ import {
   saveRecipeToSupabase // Import saveRecipeToSupabase
 } from '@/lib/supabase/recipes';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogClose, DialogHeader, DialogFooter, DialogTitle as ModalTitle } from '@/components/ui/dialog'; // For modal title accessibility
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { 
   Recipe as SpoonacularRecipe, 
   getRecipeDetails // Import getRecipeDetails
 } from '@/lib/spoonacular'; 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle as ModalTitle, // Renamed to avoid conflict with CardTitle
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Allergen } from '@/lib/allergens'; // Import Allergen type
 import { getUserAllergies } from '@/lib/supabase/profiles'; // Import getUserAllergies
 import { AlertTriangle, ImageIcon, ShoppingCart } from 'lucide-react'; // For warning icon & shopping cart
 import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import { Label } from "@/components/ui/label"; // Import Label
+import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
 
 // Helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
@@ -273,8 +266,8 @@ export default function SavedRecipesList({
   if (loading || isAuthLoading && savedRecipes.length === 0) {
     return (
         <div className="flex justify-center items-center py-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="ml-3 text-gray-600">Loading your saved recipes...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent"></div>
+            <p className="ml-3 text-foreground">Loading your saved recipes...</p>
         </div>
     );
   }
@@ -282,7 +275,7 @@ export default function SavedRecipesList({
   if (error) {
     return (
         <div className="text-center py-10">
-            <p className="text-red-500">{error}</p>
+            <p className="text-destructive">{error}</p>
             {/* Optional: Add a retry button if applicable */}
         </div>
     );
@@ -291,7 +284,7 @@ export default function SavedRecipesList({
   if (!user && !isAuthLoading) { // Ensure auth check is complete
     return (
         <div className="text-center py-10">
-            <p className="text-gray-600">Please <Link href="/auth/login" className="text-blue-600 hover:underline">log in</Link> to see your saved recipes.</p>
+            <p className="text-foreground">Please <Link href="/auth/login" className="text-accent hover:underline">log in</Link> to see your saved recipes.</p>
         </div>
     );
   }
@@ -299,8 +292,8 @@ export default function SavedRecipesList({
   if (savedRecipes.length === 0 && !loading && !isAuthLoading) { // Ensure auth check is complete
     return (
         <div className="text-center py-10">
-            <p className="text-gray-600">You haven't saved any recipes yet.</p>
-            <Link href="/" className="text-blue-600 hover:underline mt-2 inline-block">
+            <p className="text-foreground">You haven't saved any recipes yet.</p>
+            <Link href="/" className="text-accent hover:underline mt-2 inline-block">
                 Discover recipes
             </Link>
         </div>
@@ -309,49 +302,68 @@ export default function SavedRecipesList({
 
   return (
     <div className="space-y-8">
-      <h2 className="text-3xl font-semibold text-gray-800 mb-6">Your Saved Recipes</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {savedRecipes.map(recipe => (
-          <Card 
+      <h2 className="text-3xl font-semibold text-foreground mb-6">Your Saved Recipes</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10"> {/* Updated gap to match RecipeGrid */}
+        {savedRecipes.map(recipe => {
+          const allergenWarningsOnCard = getRecipeAllergenWarningsForModal(recipe, currentUserAllergies);
+          return (
+          <div // Replaces Card
             key={recipe.id} 
-            className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
-            // onClick is removed from Card to allow checkbox interaction without opening modal
+            className="bg-muted rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
           >
             <div onClick={() => handleRecipeCardClick(recipe.id)} className="cursor-pointer">
-              <CardHeader className="p-0 relative h-48 w-full">
+              <div className="relative h-56 w-full overflow-hidden"> {/* Replaces CardHeader, matches RecipeGrid image container */}
                 {recipe.image ? (
-                  <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 ) : (
-                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-300 group-hover:scale-105">
+                  <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110"> {/* Matches RecipeGrid placeholder */}
                     <ImageIcon size={40} className="mb-2" />
                     <p className="text-sm text-center font-semibold">{recipe.title}</p>
                   </div>
                 )}
-              </CardHeader>
-              <CardContent className="p-4 flex-grow">
-                <CardTitle className="text-lg font-semibold mb-2 truncate group-hover:text-blue-600" title={recipe.title}>{recipe.title}</CardTitle>
-                {recipe.summary && (
-                  <p className="text-sm text-gray-600 line-clamp-3" dangerouslySetInnerHTML={{ __html: recipe.summary.length > 100 ? recipe.summary.substring(0,100) + '...': recipe.summary}} />
+              </div>
+              <div className="p-5 flex-grow"> {/* Replaces CardContent, matches RecipeGrid content area */}
+                <h3 
+                  className="font-semibold text-lg mb-2 text-foreground truncate group-hover:text-accent transition-colors" /* Matches RecipeGrid title */
+                  title={recipe.title}
+                >
+                  {recipe.title}
+                </h3>
+
+                {allergenWarningsOnCard.length > 0 && (
+                  <div className="mb-2 text-xs text-destructive bg-destructive-foreground p-1.5 rounded-md border border-destructive flex items-center">
+                    <AlertTriangle size={14} className="mr-1.5 flex-shrink-0" />
+                    <span className="font-medium">Allergy Alert:</span>&nbsp;
+                    <span className="truncate">{allergenWarningsOnCard.join(', ')}</span>
+                  </div>
                 )}
-              </CardContent>
+
+                {recipe.summary && (
+                  <p 
+                    className="text-xs text-muted-foreground line-clamp-3 mb-2" /* Styled like RecipeGrid info */
+                    dangerouslySetInnerHTML={{ __html: recipe.summary.length > 100 ? recipe.summary.substring(0,100) + '...': recipe.summary}} 
+                  />
+                )}
+              </div>
             </div>
-            <CardFooter className="p-4 border-t flex-col space-y-2">
+            <div className="mt-auto pt-3 p-5 border-t border-background"> {/* Replaces CardFooter, matches RecipeGrid button container + padding */}
               {onToggleRecipeForShoppingList && selectedRecipeIdsForShoppingList && (
-                <div className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-50 transition-colors">
+                <div className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-background transition-colors mb-2"> {/* Added mb-2 for spacing */}
                   <Checkbox
                     id={`shopping-list-${recipe.id}`}
                     checked={selectedRecipeIdsForShoppingList.has(recipe.id)}
                     onCheckedChange={() => onToggleRecipeForShoppingList(recipe)}
                     aria-label={`Select ${recipe.title} for shopping list`}
                   />
-                  <Label htmlFor={`shopping-list-${recipe.id}`} className="text-sm font-medium text-gray-700 cursor-pointer flex-grow">
+                  <Label htmlFor={`shopping-list-${recipe.id}`} className="text-sm font-medium text-foreground cursor-pointer flex-grow">
                     Add to Shopping List
                   </Label>
-                  <ShoppingCart size={16} className="text-gray-500" />
+                  <ShoppingCart size={16} className="text-foreground" />
                 </div>
               )}
               <Button 
                 variant="destructive" 
+                size="sm" /* Added size sm for consistency */
                 className="w-full"
                 onClick={(e) => {
                     e.stopPropagation(); 
@@ -360,120 +372,26 @@ export default function SavedRecipesList({
               >
                 Unsave
               </Button>
-            </CardFooter>
-          </Card>
-        ))}
+            </div>
+          </div>
+        )})}
       </div>
 
       {/* Recipe Details Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
-          {modalLoading && (
-            <div className="flex justify-center items-center h-96">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500">
-                 <ModalTitle className="sr-only">Loading Recipe Details</ModalTitle>
-              </div>
-              <p className="ml-3 text-gray-600">Loading recipe details...</p>
-            </div>
-          )}
-          {modalError && !modalLoading && (
-            <div className="p-8 text-center">
-              <DialogHeader>
-                <ModalTitle className="text-xl font-semibold text-red-600">Error</ModalTitle>
-              </DialogHeader>
-              <p className="text-gray-700 mt-2 mb-6">{modalError}</p>
-              <DialogClose asChild>
-                <Button variant="outline">Close</Button>
-              </DialogClose>
-            </div>
-          )}
-          {selectedRecipeDetail && !modalLoading && !modalError && (
-            <>
-              <DialogHeader className="p-6 border-b">
-                <ModalTitle className="text-2xl font-bold text-gray-800">{selectedRecipeDetail.title}</ModalTitle>
-              </DialogHeader>
-              <div className="overflow-y-auto flex-grow p-6 space-y-5">
-                {selectedRecipeDetail.image && (
-                  <div className="relative h-72 w-full rounded-lg overflow-hidden shadow-md mb-6">
-                    <img 
-                      src={selectedRecipeDetail.image} 
-                      alt={selectedRecipeDetail.title} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Allergen Warnings in Modal */}
-                {(() => {
-                  const allergenWarningsInModal = getRecipeAllergenWarningsForModal(selectedRecipeDetail, currentUserAllergies);
-                  if (allergenWarningsInModal.length > 0) {
-                    return (
-                      <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-red-700 flex items-center text-sm">
-                        <AlertTriangle size={18} className="mr-2 flex-shrink-0 text-red-600" />
-                        <span className="font-semibold text-red-800">Allergy Alert:</span>&nbsp;
-                        <span className="text-red-700">{allergenWarningsInModal.join(', ')}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
-                {selectedRecipeDetail.summary && (
-                    <div>
-                        <h4 className="font-semibold text-lg mb-1 text-gray-700">Summary:</h4>
-                        <div className="prose prose-sm max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: selectedRecipeDetail.summary }} />
-                    </div>
-                )}
-                
-                {selectedRecipeDetail.extendedIngredients && selectedRecipeDetail.extendedIngredients.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mb-2 text-gray-700">Ingredients:</h4>
-                    <ul className="list-disc list-inside pl-4 space-y-1 text-gray-600">
-                      {selectedRecipeDetail.extendedIngredients.map(ingredient => (
-                        <li key={ingredient.id || ingredient.name} className="text-sm">{ingredient.original}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {selectedRecipeDetail.analyzedInstructions && selectedRecipeDetail.analyzedInstructions.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mt-3 mb-2 text-gray-700">Instructions:</h4>
-                    {selectedRecipeDetail.analyzedInstructions.map((instructionSet, index) => (
-                      <div key={index} className="mb-4">
-                        {instructionSet.name && <h5 className="font-medium text-md mb-1 text-gray-700">{instructionSet.name}</h5>}
-                        <ol className="list-decimal list-inside pl-4 space-y-1.5 text-gray-600 text-sm">
-                          {instructionSet.steps.map(step => (
-                            <li key={step.number}>{step.step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {!selectedRecipeDetail.summary && (!selectedRecipeDetail.extendedIngredients || selectedRecipeDetail.extendedIngredients.length === 0) && (!selectedRecipeDetail.analyzedInstructions || selectedRecipeDetail.analyzedInstructions.length === 0) && (
-                    <p className="text-gray-600">Detailed information for this recipe is not available.</p>
-                )}
-              </div>
-              <DialogFooter className="p-6 border-t flex justify-end space-x-2">
-                <Button 
-                    variant={selectedRecipeDetail && componentSavedRecipeIds.has(selectedRecipeDetail.id!) ? "default" : "outline"}
-                    onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if(selectedRecipeDetail) handleToggleSaveRecipeInModal(selectedRecipeDetail); 
-                    }}
-                    disabled={!selectedRecipeDetail || isSavingRecipe[selectedRecipeDetail.id!] || !user || isAuthLoading}
-                >
-                  {selectedRecipeDetail && isSavingRecipe[selectedRecipeDetail.id!] ? (componentSavedRecipeIds.has(selectedRecipeDetail.id!) ? 'Unsaving...' : 'Saving...') : (selectedRecipeDetail && componentSavedRecipeIds.has(selectedRecipeDetail.id!) ? 'Unsave Recipe' : 'Save Recipe')}
-                </Button>
-                <DialogClose asChild>
-                  <Button variant="outline">Close</Button>
-                </DialogClose>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <RecipeDetailModal
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedRecipe={selectedRecipeDetail}
+        modalLoading={modalLoading}
+        modalError={modalError}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        savedRecipeIds={componentSavedRecipeIds} // Use component's saved IDs state
+        isSaving={isSavingRecipe} // Use component's saving state
+        onToggleSave={handleToggleSaveRecipeInModal} // Pass the correct handler
+        currentUserAllergies={currentUserAllergies}
+        getRecipeAllergenWarnings={getRecipeAllergenWarningsForModal} // Pass existing helper
+      />
     </div>
   );
 }

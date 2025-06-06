@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { RecipeGrid } from '@/components/recipe-grid';
 import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
+import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
 
 const INITIAL_RECIPE_COUNT = 12;
 const MORE_RECIPE_COUNT = 8;
@@ -54,6 +55,28 @@ function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[]
     topCuisines: sortedCuisines.slice(0, 2),
     topDiets: sortedDiets.slice(0, 1),
   };
+}
+
+// Define the allergen warning function for the modal, can be shared or specific
+function getHomePageRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0 || !recipe) {
+    return [];
+  }
+  const triggeredAllergens: string[] = [];
+  userAllergies.forEach(allergy => {
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
+        break;
+      case "Wheat":
+        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
+        break;
+    }
+  });
+  return [...new Set(triggeredAllergens)];
 }
 
 
@@ -379,8 +402,8 @@ export default function HomePage() {
   if (loading && recipes.length === 0 && !initialFetchInitiated) { // Show main loader only if initial fetch not even initiated and no recipes
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-2xl font-semibold text-gray-700 mb-4">Loading delicious recipes...</p>
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="text-2xl font-semibold text-foreground mb-4">Loading delicious recipes...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -388,8 +411,8 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-red-600 mb-3">Oops! Something went wrong.</h2>
-        <p className="text-md text-gray-700 mb-6 max-w-md">{error}</p>
+        <h2 className="text-2xl font-semibold text-destructive mb-3">Oops! Something went wrong.</h2>
+        <p className="text-md text-foreground mb-6 max-w-md">{error}</p>
         <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
@@ -404,7 +427,7 @@ export default function HomePage() {
       {recipes.length === 0 && !loading && !isFetchingMore && (
         <div className="text-center text-muted-foreground py-10">
             <p className="text-xl mb-2">No recipes found at the moment.</p>
-            <p>This might be due to an API key issue or network problem. Please ensure <code>NEXT_PUBLIC_SPOONACULAR_API_KEY</code> is set in your <code>.env.local</code> file.</p>
+            <p>This might be due to an API key issue or network problem.</p>
         </div>
       )}
 
@@ -433,95 +456,20 @@ export default function HomePage() {
       )}
 
       {/* Recipe Details Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
-          {modalLoading && (
-            <div className="flex justify-center items-center h-96">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent">
-                <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
-              </div>
-              <p className="ml-3 text-foreground">Loading recipe details...</p>
-            </div>
-          )}
-          {modalError && !modalLoading && (
-            <div className="p-8 text-center">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-semibold text-destructive">Error</DialogTitle>
-              </DialogHeader>
-              <p className="text-foreground mt-2 mb-6">{modalError}</p>
-            </div>
-          )}
-          {selectedRecipe && !modalLoading && !modalError && (
-            <>
-              <DialogHeader className="p-6 border-1 border-b border-muted">
-                <DialogTitle className="text-2xl font-bold text-accent">{selectedRecipe.title}</DialogTitle>
-              </DialogHeader>
-              <div className="overflow-y-auto flex-grow p-6 space-y-5">
-                {selectedRecipe.image && (
-                  <div className="relative h-72 w-full rounded-lg overflow-hidden shadow-md mb-6">
-                    <img 
-                      src={selectedRecipe.image} 
-                      alt={selectedRecipe.title} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                {selectedRecipe.summary && (
-                    <div>
-                        <h4 className="font-semibold text-lg mb-1 text-accent">Summary:</h4>
-                        <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
-                    </div>
-                )}
-                
-                {selectedRecipe.extendedIngredients && selectedRecipe.extendedIngredients.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mb-2 text-accent">Ingredients:</h4>
-                    <ul className="list-disc list-inside pl-4 space-y-1 text-foreground">
-                      {selectedRecipe.extendedIngredients.map(ingredient => (
-                        <li key={ingredient.id || ingredient.name} className="text-sm">{ingredient.original}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {selectedRecipe.analyzedInstructions && selectedRecipe.analyzedInstructions.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mt-3 mb-2 text-accent">Instructions:</h4>
-                    {selectedRecipe.analyzedInstructions.map((instructionSet, index) => (
-                      <div key={index} className="mb-4">
-                        {instructionSet.name && <h5 className="font-medium text-md mb-1 text-foreground">{instructionSet.name}</h5>}
-                        <ol className="list-decimal list-inside pl-4 space-y-1.5 text-foreground text-sm">
-                          {instructionSet.steps.map(step => (
-                            <li key={step.number}>{step.step}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {!selectedRecipe.summary && (!selectedRecipe.extendedIngredients || selectedRecipe.extendedIngredients.length === 0) && (!selectedRecipe.analyzedInstructions || selectedRecipe.analyzedInstructions.length === 0) && (
-                    <p className="text-foreground">Detailed information for this recipe is not available.</p>
-                )}
-              </div>
-              <DialogFooter className="p-6 border-t flex justify-end space-x-2">
-                <Button 
-                    variant={selectedRecipe && savedRecipeIds.has(selectedRecipe.id!) ? "default" : "outline"}
-                    onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if(selectedRecipe) handleToggleSaveRecipe(selectedRecipe); 
-                    }}
-                    disabled={!selectedRecipe || isSaving[selectedRecipe.id!] || !user || isAuthLoading}
-                >
-                  {selectedRecipe && isSaving[selectedRecipe.id!] ? (savedRecipeIds.has(selectedRecipe.id!) ? 'Unsaving...' : 'Saving...') : (selectedRecipe && savedRecipeIds.has(selectedRecipe.id!) ? 'Unsave Recipe' : 'Save Recipe')}
-                </Button>
-                <DialogClose asChild>
-                  <Button>Close</Button>
-                </DialogClose>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <RecipeDetailModal
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedRecipe={selectedRecipe}
+        modalLoading={modalLoading}
+        modalError={modalError}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        savedRecipeIds={savedRecipeIds}
+        isSaving={isSaving}
+        onToggleSave={handleToggleSaveRecipe}
+        currentUserAllergies={currentUserAllergies}
+        getRecipeAllergenWarnings={getHomePageRecipeAllergenWarnings}
+      />
 
     </div>
   )

@@ -487,7 +487,7 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
-            {isSavingAllergies && <p className="text-sm text-blue-600 mt-2 animate-pulse">Saving allergy settings...</p>}
+            {isSavingAllergies && <p className="text-sm text-accent mt-2 animate-pulse">Saving allergy settings...</p>}
           </div>
 
         </CardContent>
@@ -496,12 +496,12 @@ export default function ProfilePage() {
       {/* Shopping List Generator Section */}
       <Card className="max-w-4xl mx-auto mb-10"> 
         <CardHeader className="no-print"> 
-          <CardTitle className="text-2xl">Shopping List Generator</CardTitle>
+          <CardTitle className="text-2xl text-foreground">Shopping List Generator</CardTitle>
           <CardDescription>Select recipes from your saved list below, then generate a combined shopping list.</CardDescription>
         </CardHeader>
         <CardContent>
           {selectedRecipesForList.size > 0 && (
-            <div className="mb-4 text-sm text-gray-600 no-print"> 
+            <div className="mb-4 text-sm text-foreground no-print"> 
               {selectedRecipesForList.size} recipe(s) selected for the shopping list.
             </div>
           )}
@@ -520,8 +520,8 @@ export default function ProfilePage() {
 
           {isGeneratingList && (
             <div className="mt-6 text-center no-print"> 
-              <RefreshCw className="mx-auto h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-500 mt-2">Combining ingredients...</p>
+              <RefreshCw className="mx-auto h-8 w-8 animate-spin text-accent" />
+              <p className="text-sm text-foreground mt-2">Combining ingredients...</p>
             </div>
           )}
 

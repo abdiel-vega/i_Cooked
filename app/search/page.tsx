@@ -85,7 +85,7 @@ export default function SearchPage() {
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-foreground mb-2">Discover Recipes</h1>
-        <p className="text-lg text-foreground">Find your next favorite meal with our extensive recipe collection.</p>
+        <p className="text-lg text-foreground">Find and learn how to cook your next meal!</p>
       </header>
 
       {/* Search Bar and Filters Section */}

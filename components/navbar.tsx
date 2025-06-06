@@ -15,7 +15,7 @@ export default async function Navbar() {
       <div className="max-w-7xl mx-auto py-2 px-4">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="font-bold text-4xl text-foreground transition delay-50 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:text-accent">
-            Cooked
+            i_Cooked
           </Link>
           
           <div className="flex items-center gap-6">

@@ -25,34 +25,36 @@ import {
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
 // import { RecipeGrid } from '@/components/recipe-grid'; // Not used here
+import { RecipeGrid } from '@/components/recipe-grid'; // Import RecipeGrid
 import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
 import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
+import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
 
 const RECIPES_PER_PAGE = 12;
 
 // Helper function to check for allergens in a recipe (similar to RecipeGrid)
-function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
-  if (!userAllergies || userAllergies.length === 0 || !recipe) {
-    return [];
-  }
-  const triggeredAllergens: string[] = [];
-  userAllergies.forEach(allergy => {
-    switch (allergy) {
-      case "Gluten":
-        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
-        break;
-      case "Dairy":
-        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
-        break;
-      case "Wheat":
-        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
-        break;
-      // Add other cases based on available recipe properties
-    }
-  });
-  return [...new Set(triggeredAllergens)]; // Return names of allergens
-}
+// function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+//   if (!userAllergies || userAllergies.length === 0 || !recipe) {
+//     return [];
+//   }
+//   const triggeredAllergens: string[] = [];
+//   userAllergies.forEach(allergy => {
+//     switch (allergy) {
+//       case "Gluten":
+//         if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
+//         break;
+//       case "Dairy":
+//         if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
+//         break;
+//       case "Wheat":
+//         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
+//         break;
+//       // Add other cases based on available recipe properties
+//     }
+//   });
+//   return [...new Set(triggeredAllergens)]; // Return names of allergens
+// }
 
 
 export default function CuisinePage() {
@@ -286,7 +288,7 @@ export default function CuisinePage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <Button variant="outline" onClick={() => router.back()} className="mb-6 text-sm">
+      <Button onClick={() => router.back()} className="mb-6 text-md">
         &larr; Back to Search
       </Button>
       <h1 className="text-4xl font-extrabold mb-12 text-center text-gray-800 tracking-tight">
@@ -300,100 +302,18 @@ export default function CuisinePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-        {recipes.map((recipe, index) => {
-          const currentRecipeId = recipe.id!;
-          const isCurrentlySaving = isSaving[currentRecipeId] || false;
-          const isRecipeSaved = savedRecipeIds.has(currentRecipeId);
-          const allergenWarnings = getRecipeAllergenWarningsCuisine(recipe, currentUserAllergies);
-          
-          const delayBase = initialLoadAnimationComplete || isFetchingMore ? 0.05 : 0.1;
-          let animationDelay = '0s';
-
-          if (!loading && !isFetchingMore) {
-             animationDelay = `${index * delayBase}s`;
-          } else if (isFetchingMore) {
-            // Apply faster stagger for newly loaded items
-            // This assumes new items are appended and RECIPES_PER_PAGE items were just loaded
-            const previousItemCount = recipes.length - RECIPES_PER_PAGE;
-            if (index >= previousItemCount && previousItemCount >=0) {
-                 animationDelay = `${(index - previousItemCount) * 0.05}s`;
-            } else if (index < RECIPES_PER_PAGE) { // Fallback for initial batch if somehow isFetchingMore is true
-                 animationDelay = `${index * 0.1}s`;
-            }
-          }
-          if (!initialLoadAnimationComplete && index < RECIPES_PER_PAGE) {
-            animationDelay = `${index * 0.1}s`;
-          }
-
-          return (
-            <div 
-              key={currentRecipeId} 
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
-              style={{ animationDelay: (!loading && recipes.length > 0) ? animationDelay : '0s' }} 
-            >
-              <div 
-                className="relative h-56 w-full overflow-hidden cursor-pointer"
-                onClick={() => handleRecipeClick(currentRecipeId)}
-              >
-                {recipe.image ? (
-                  <img 
-                    src={recipe.image} 
-                    alt={recipe.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 p-3 transition-transform duration-500 group-hover:scale-110">
-                    <ImageIcon size={40} className="mb-2" />
-                    <p className="text-sm text-center font-semibold">{recipe.title}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-5 flex flex-col flex-grow">
-                <h3 
-                  className="font-semibold text-lg mb-2 text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer"
-                  title={recipe.title}
-                  onClick={() => handleRecipeClick(currentRecipeId)}
-                >
-                  {recipe.title}
-                </h3>
-                {allergenWarnings.length > 0 && (
-                  <div className="mb-1 text-xs text-red-600 bg-red-50 p-1 rounded border border-red-200 flex items-center">
-                    <AlertTriangle size={14} className="mr-1.5 flex-shrink-0" />
-                    <span className="font-medium">Allergy Alert:</span>&nbsp;
-                    <span className="truncate">{allergenWarnings.join(', ')}</span>
-                  </div>
-                )}
-                <div className="mb-2 space-y-1 text-xs text-gray-500">
-                  {recipe.readyInMinutes && <p>Ready in: {recipe.readyInMinutes} mins</p>}
-                  {recipe.servings && <p>Servings: {recipe.servings}</p>}
-                  {/* Cuisine is already known, but API might return sub-cuisines or more specific tags */}
-                  {recipe.cuisines && recipe.cuisines.length > 0 && !recipe.cuisines.includes(actualCuisineName || '') && (
-                    <p>Also: {recipe.cuisines.join(', ')}</p>
-                  )}
-                  {recipe.diets && recipe.diets.length > 0 && <p>Diet: {recipe.diets.join(', ')}</p>}
-                  {recipe.vegetarian && <p className="text-green-600">Vegetarian</p>}
-                  {recipe.vegan && <p className="text-green-600">Vegan</p>}
-                  {recipe.glutenFree && <p className="text-blue-600">Gluten-Free</p>}
-                  {recipe.dairyFree && <p className="text-blue-600">Dairy-Free</p>}
-                </div>
-                <div className="mt-auto pt-3">
-                  <Button 
-                    variant={isRecipeSaved ? "default" : "outline"}
-                    size="sm"
-                    className="w-full"
-                    onClick={(e) => { e.stopPropagation(); handleToggleSaveRecipe(recipe); }}
-                    disabled={isCurrentlySaving || !user || isAuthLoading} 
-                  >
-                    {isCurrentlySaving ? (isRecipeSaved ? 'Unsaving...' : 'Saving...') : (isRecipeSaved ? 'Unsave Recipe' : 'Save Recipe')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <RecipeGrid
+        recipes={recipes}
+        savedRecipeIds={savedRecipeIds}
+        isSaving={isSaving}
+        onRecipeClick={handleRecipeClick}
+        onToggleSave={handleToggleSaveRecipe}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        gridOverallLoading={loading}
+        animationType={currentOffset === recipes.length && recipes.length <= RECIPES_PER_PAGE && !isFetchingMore ? 'initial' : 'subsequent'}
+        userAllergies={currentUserAllergies}
+      />
 
       {isFetchingMore && (
         <div className="flex justify-center items-center py-10">
@@ -407,93 +327,43 @@ export default function CuisinePage() {
       )}
 
       {/* Recipe Details Modal (same as homepage) */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
-          {modalLoading && (
-            <div className="flex justify-center items-center h-96">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500">
-                <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
-              </div>
-              <p className="ml-3 text-gray-600">Loading recipe details...</p>
-            </div>
-          )}
-          {modalError && !modalLoading && (
-            <div className="p-8 text-center">
-              <DialogHeader><DialogTitle className="text-xl font-semibold text-red-600">Error</DialogTitle></DialogHeader>
-              <p className="text-gray-700 mt-2 mb-6">{modalError}</p>
-              <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
-            </div>
-          )}
-          {selectedRecipe && !modalLoading && !modalError && (
-            <>
-              <DialogHeader className="p-6 border-b"><DialogTitle className="text-2xl font-bold text-gray-800">{selectedRecipe.title}</DialogTitle></DialogHeader>
-              <div className="overflow-y-auto flex-grow p-6 space-y-5">
-                {selectedRecipe.image && (
-                  <div className="relative h-72 w-full rounded-lg overflow-hidden shadow-md mb-6">
-                    <img src={selectedRecipe.image} alt={selectedRecipe.title} className="w-full h-full object-cover"/>
-                  </div>
-                )}
-
-                {/* Allergen Warnings in Modal */}
-                {(() => {
-                  const allergenWarningsInModal = getRecipeAllergenWarningsCuisine(selectedRecipe, currentUserAllergies);
-                  if (allergenWarningsInModal.length > 0) {
-                    return (
-                      <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-red-700 flex items-center text-sm">
-                        <AlertTriangle size={18} className="mr-2 flex-shrink-0 text-red-600" />
-                        <span className="font-semibold text-red-800">Allergy Alert:</span>&nbsp;
-                        <span className="text-red-700">{allergenWarningsInModal.join(', ')}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
-                {selectedRecipe.summary && (
-                    <div>
-                        <h4 className="font-semibold text-lg mb-1 text-gray-700">Summary:</h4>
-                        <div className="prose prose-sm max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
-                    </div>
-                )}
-                {selectedRecipe.extendedIngredients && selectedRecipe.extendedIngredients.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mb-2 text-gray-700">Ingredients:</h4>
-                    <ul className="list-disc list-inside pl-4 space-y-1 text-gray-600">
-                      {selectedRecipe.extendedIngredients.map(ing => <li key={ing.id || ing.name} className="text-sm">{ing.original}</li>)}
-                    </ul>
-                  </div>
-                )}
-                {selectedRecipe.analyzedInstructions && selectedRecipe.analyzedInstructions.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-lg mt-3 mb-2 text-gray-700">Instructions:</h4>
-                    {selectedRecipe.analyzedInstructions.map((instrSet, idx) => (
-                      <div key={idx} className="mb-4">
-                        {instrSet.name && <h5 className="font-medium text-md mb-1 text-gray-700">{instrSet.name}</h5>}
-                        <ol className="list-decimal list-inside pl-4 space-y-1.5 text-gray-600 text-sm">
-                          {instrSet.steps.map(step => <li key={step.number}>{step.step}</li>)}
-                        </ol>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {!selectedRecipe.summary && (!selectedRecipe.extendedIngredients || selectedRecipe.extendedIngredients.length === 0) && (!selectedRecipe.analyzedInstructions || selectedRecipe.analyzedInstructions.length === 0) && (
-                    <p className="text-gray-600">Detailed information for this recipe is not available.</p>
-                )}
-              </div>
-              <DialogFooter className="p-6 border-t flex justify-end space-x-2">
-                <Button 
-                    variant={selectedRecipe && savedRecipeIds.has(selectedRecipe.id!) ? "default" : "outline"}
-                    onClick={(e) => { e.stopPropagation(); if(selectedRecipe) handleToggleSaveRecipe(selectedRecipe); }}
-                    disabled={!selectedRecipe || isSaving[selectedRecipe.id!] || !user || isAuthLoading}
-                >
-                  {selectedRecipe && isSaving[selectedRecipe.id!] ? (savedRecipeIds.has(selectedRecipe.id!) ? 'Unsaving...' : 'Saving...') : (selectedRecipe && savedRecipeIds.has(selectedRecipe.id!) ? 'Unsave Recipe' : 'Save Recipe')}
-                </Button>
-                <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <RecipeDetailModal
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        selectedRecipe={selectedRecipe}
+        modalLoading={modalLoading}
+        modalError={modalError}
+        user={user}
+        isAuthLoading={isAuthLoading}
+        savedRecipeIds={savedRecipeIds}
+        isSaving={isSaving}
+        onToggleSave={handleToggleSaveRecipe}
+        currentUserAllergies={currentUserAllergies}
+        getRecipeAllergenWarnings={getRecipeAllergenWarningsCuisine} // Pass existing helper
+      />
     </div>
   )
+}
+
+// Keep for modal if needed
+function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
+  if (!userAllergies || userAllergies.length === 0 || !recipe) {
+    return [];
+  }
+  const triggeredAllergens: string[] = [];
+  userAllergies.forEach(allergy => {
+    switch (allergy) {
+      case "Gluten":
+        if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
+        break;
+      case "Dairy":
+        if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
+        break;
+      case "Wheat":
+        if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
+        break;
+      // Add other cases based on available recipe properties
+    }
+  });
+  return [...new Set(triggeredAllergens)];
 }

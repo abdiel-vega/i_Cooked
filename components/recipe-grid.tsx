@@ -113,7 +113,7 @@ export function RecipeGrid({
                 {recipe.title}
               </h3>
               {allergenWarnings.length > 0 && (
-                <div className="mb-2 text-xs text-red-600 bg-red-50 p-1.5 rounded-md border border-red-200 flex items-center">
+                <div className="mb-2 text-xs text-destructive bg-destructive-foreground p-1.5 rounded-md border border-destructive flex items-center">
                   <AlertTriangle size={14} className="mr-1.5 flex-shrink-0" />
                   <span className="font-medium">Allergy Alert:</span>&nbsp;
                   <span className="truncate">{allergenWarnings.join(', ')}</span>
@@ -132,8 +132,8 @@ export function RecipeGrid({
                 )}
                 {recipe.vegetarian && (
                   <div className="flex items-center gap-1">
-                    <p className="text-green-500">Vegetarian</p>
-                    <LeafyGreen className="text-green-500" size={14} />
+                    <p className="text-green-600">Vegetarian</p>
+                    <LeafyGreen className="text-green-600" size={14} />
                   </div>
                 )}
                 {recipe.vegan && (
@@ -144,20 +144,20 @@ export function RecipeGrid({
                 )}
                 {recipe.glutenFree && (
                   <div className="flex items-center gap-1">
-                    <p className="text-orange-400">Gluten-Free</p>
+                    <p className="text-orange-500">Gluten-Free</p>
                     <WheatOff className="text-orange-500" size={14} />
                   </div>
                 )}
                 {recipe.dairyFree && (
                   <div className="flex items-center gap-1">
-                    <p className="text-blue-400">Dairy-Free</p>
+                    <p className="text-blue-500">Dairy-Free</p>
                     <MilkOff className="text-blue-500" size={14} />
                   </div>
                 )}
               </div>
               <div className="mt-auto pt-3">
                 <Button
-                  variant={isRecipeSaved ? "default" : "outline"}
+                  variant={isRecipeSaved ? "destructive" : "outline"}
                   size="sm"
                   className="w-full"
                   onClick={(e) => {
