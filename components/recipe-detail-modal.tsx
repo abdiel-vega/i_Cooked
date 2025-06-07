@@ -73,7 +73,7 @@ export function RecipeDetailModal({
             <DialogHeader className="p-6 border-b border-background">
               <DialogTitle className="text-2xl font-bold text-accent">{selectedRecipe.title}</DialogTitle>
             </DialogHeader>
-            <div className="overflow-y-auto flex-grow p-6 space-y-5">
+            <div className="overflow-y-auto flex-grow p-6 space-y-5 group">
               {selectedRecipe.image && (
                 <div className="relative h-72 w-full rounded-lg overflow-hidden shadow-md mb-6">
                   <img 
@@ -101,7 +101,7 @@ export function RecipeDetailModal({
               {selectedRecipe.summary && (
                   <div>
                       <h4 className="font-semibold text-lg mb-1 text-accent">Summary:</h4>
-                      <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
+                      <div className="prose prose-sm max-w-none text-foreground [&_a:hover]:text-accent" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
                   </div>
               )}
               

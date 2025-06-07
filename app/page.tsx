@@ -419,7 +419,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4">
       <h1 className="text-4xl font-extrabold mb-12 text-center text-foreground tracking-tight">
         {user && userSavedRecipesForAnalysis.length > 0 ? "Recipes For You" : "Prepare Your Next Meal"}
       </h1>
