@@ -43,13 +43,13 @@ export default async function Navbar() {
               </>
             ) : (
               <>
-                <Button asChild size="sm" variant="ghost">
+                <Button asChild variant={'ghost'}>
                   <Link href="/auth/login" className="flex items-center gap-2">
                     <LogIn size={26} />
-                    <span>Sign in</span>
+                    <span>Login</span>
                   </Link>
                 </Button>
-                <Button asChild size="sm">
+                <Button asChild variant={'outline'}>
                   <Link href="/auth/sign-up" className="flex items-center gap-2">
                     <UserPlus size={26} />
                     <span>Sign up</span>

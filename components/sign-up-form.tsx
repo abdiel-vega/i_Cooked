@@ -72,7 +72,7 @@ export function SignUpForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="email@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -85,6 +85,7 @@ export function SignUpForm({
                 <Input
                   id="password"
                   type="password"
+                  placeholder="password123"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -102,14 +103,14 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button type="submit" variant={"outline"} className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
+              <Link href="/auth/login" className="text-accent underline-offset-4 hover:underline">
                 Login
               </Link>
             </div>
