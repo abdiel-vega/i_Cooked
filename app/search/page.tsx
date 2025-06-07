@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CUISINES, DIETS as DIET_OPTIONS } from '@/lib/spoonacular'; // Import from lib
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // SearchBar component
 const SearchBar = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
@@ -16,41 +25,6 @@ const SearchBar = ({ value, onChange }: { value: string; onChange: (value: strin
     value={value}
     onChange={(e) => onChange(e.target.value)}
   />
-);
-
-// FilterDropdown component
-const FilterDropdown = ({
-  label,
-  options,
-  id,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <div className="flex flex-col">
-    <label htmlFor={id} className="mb-1 text-sm font-medium text-foreground">
-      {label}:
-    </label>
-    <select
-      id={id}
-      className="p-2 rounded-lg bg-background focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      <option value="">Any</option>
-      {options.map((option) => (
-        // Use the option itself as the value, URL encoding will handle spaces.
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  </div>
 );
 
 // Ready time options (in minutes)
@@ -93,12 +67,74 @@ export default function SearchPage() {
         <div className="mb-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <FilterDropdown label="Diet" options={DIET_OPTIONS} id="diet-filter" value={selectedDiet} onChange={setSelectedDiet} />
-          <FilterDropdown label="Cuisine Preference" options={CUISINES} id="cuisine-filter" value={selectedCuisine} onChange={setSelectedCuisine} />
-          <FilterDropdown label="Max Ready Time (min)" options={READY_TIME_OPTIONS} id="ready-time-filter" value={selectedReadyTime} onChange={setSelectedReadyTime} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Adjusted grid to 3 cols for filters */}
+          {/* Diet Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="filter" className="w-full justify-between">
+                {selectedDiet || "Select Diet"}
+                <span className="ml-2 text-xs opacity-70">▼</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Diet Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedDiet} onValueChange={setSelectedDiet}>
+                <DropdownMenuRadioItem value="">Any</DropdownMenuRadioItem>
+                {DIET_OPTIONS.map((diet) => (
+                  <DropdownMenuRadioItem key={diet} value={diet}>
+                    {diet}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Cuisine Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="filter" className="w-full justify-between">
+                {selectedCuisine || "Select Cuisine"}
+                <span className="ml-2 text-xs opacity-70">▼</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Cuisine Preference</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedCuisine} onValueChange={setSelectedCuisine}>
+                <DropdownMenuRadioItem value="">Any</DropdownMenuRadioItem>
+                {CUISINES.map((cuisine) => (
+                  <DropdownMenuRadioItem key={cuisine} value={cuisine}>
+                    {cuisine}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Ready Time Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="filter" className="w-full justify-between">
+                {selectedReadyTime ? (selectedReadyTime === "120+" ? "120+ min" : `${selectedReadyTime} min`) : "Max Ready Time"}
+                <span className="ml-2 text-xs opacity-70">▼</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Max Ready Time (minutes)</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedReadyTime} onValueChange={setSelectedReadyTime}>
+                <DropdownMenuRadioItem value="">Any</DropdownMenuRadioItem>
+                {READY_TIME_OPTIONS.map((time) => (
+                  <DropdownMenuRadioItem key={time} value={time}>
+                    {time === "120+" ? "120+" : time}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <Button 
+        <Button
           className="mt-6 w-full bg-primary hover:bg-accent text-background font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
           onClick={handleSearch}
         >

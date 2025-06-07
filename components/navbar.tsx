@@ -12,7 +12,7 @@ export default async function Navbar() {
   } = await supabase.auth.getUser()
 
   return (
-    <div className="sticky top-0 z-50 py-3"> {/* Container for sticky positioning and vertical padding */}
+    <div className="sticky top-0 z-50 pt-3"> {/* Container for sticky positioning and vertical padding */}
       <nav className="bg-transparent backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto"> {/* Apply new styles here */}
         <div className="max-w-7xl mx-auto py-2 px-4"> {/* This div might be redundant if max-w-7xl is on nav, but kept for structure if needed */}
           <div className="flex justify-between items-center h-16">

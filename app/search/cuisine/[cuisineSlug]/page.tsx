@@ -278,7 +278,7 @@ export default function CuisinePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4">
       <Button onClick={() => router.back()} className="mb-6 text-md">
         &larr; Back to Search
       </Button>
