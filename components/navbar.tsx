@@ -13,7 +13,7 @@ export default async function Navbar() {
 
   return (
     <div className="sticky top-0 z-50 py-3"> {/* Container for sticky positioning and vertical padding */}
-      <nav className="bg-muted/80 backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto"> {/* Apply new styles here */}
+      <nav className="bg-transparent backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto"> {/* Apply new styles here */}
         <div className="max-w-7xl mx-auto py-2 px-4"> {/* This div might be redundant if max-w-7xl is on nav, but kept for structure if needed */}
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center font-bold text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-110 hover:text-accent">
