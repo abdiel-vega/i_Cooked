@@ -11,7 +11,7 @@ const SearchBar = ({ value, onChange }: { value: string; onChange: (value: strin
   <input
     type="text"
     placeholder="Search recipes, ingredients..."
-    className="p-3 bg-background text-foreground rounded-lg w-full focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
+    className="p-3 placeholder-muted-foreground bg-background text-foreground rounded-lg w-full focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
     aria-label="Search recipes"
     value={value}
     onChange={(e) => onChange(e.target.value)}

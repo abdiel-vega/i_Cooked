@@ -462,8 +462,8 @@ export default function ProfilePage() {
               <CardTitle className="text-2xl">Your Profile</CardTitle>
               <CardDescription className='text-muted-foreground'>Manage your account settings and preferences.</CardDescription>
             </div>
-            <div className="ml-auto bg-background border border-primary px-3 py-1 rounded-md">
-              <p className="text-sm text-foreground">{user.email}</p>
+            <div className="ml-auto bg-background border border-primary px-3 py-1 rounded-md shadow-none transition ease-in-out duration-300 cursor-pointer hover:shadow-lg hover:border-accent hover:scale-105">
+              <p className="text-sm text-foreground ">{user.email}</p>
             </div>
           </div>
         </CardHeader>
@@ -550,15 +550,15 @@ export default function ProfilePage() {
                   <li 
                     key={item.id} 
                     // Tailwind classes for on-screen display:
-                    className="p-3 border rounded-md bg-gray-50/70 text-sm flex justify-between items-start"
+                    className="p-3 border border-background rounded-md bg-background text-sm text-foreground flex justify-between items-start transition duration-300 ease-in-out hover:border-accent"
                   >
                     <div className="item-details flex-grow pr-2 sm:pr-4"> {/* Adjusted padding for screen */}
                       <span className="font-medium item-name block mb-0.5">{item.displayName}</span>
-                      <div className="text-xs text-gray-500 item-source"> {/* Screen: text-xs, gray; Print: styled by .item-source */}
+                      <div className="text-xs text-muted-foreground item-source"> {/* Screen: text-xs, gray; Print: styled by .item-source */}
                         From: {item.recipeSources.map(src => src.recipeTitle).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
                       </div>
                     </div>
-                    <span className="text-gray-700 text-right item-quantity whitespace-nowrap flex-shrink-0 pl-2 sm:pl-0"> {/* Added pl for screen if quantity is long */}
+                    <span className="text-foreground text-right item-quantity whitespace-nowrap flex-shrink-0 pl-2 sm:pl-0"> {/* Added pl for screen if quantity is long */}
                       {renderShoppingListItemAmountUnit(item)}
                     </span>
                   </li>
@@ -567,7 +567,7 @@ export default function ProfilePage() {
             </div>
           )}
           {generatedShoppingList && generatedShoppingList.length === 0 && !isGeneratingList && (
-             <p className="mt-6 text-center text-gray-600 no-print">No ingredients to list. Ensure selected recipes have ingredient data.</p>
+             <p className="mt-6 text-center text-foreground no-print">No ingredients to list. Ensure selected recipes have ingredient data.</p>
           )}
         </CardContent>
       </Card>
