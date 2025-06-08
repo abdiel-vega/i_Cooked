@@ -46,7 +46,7 @@ export default async function Navbar() {
                 </>
               ) : (
                 <>
-                  <Button asChild variant={'ghost'}>
+                  <Button asChild variant={'outline'}>
                     <Link href="/auth/login" className="flex items-center gap-2">
                       <LogIn size={26} />
                       <span>Login</span>
