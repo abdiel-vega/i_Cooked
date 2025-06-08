@@ -1,69 +1,134 @@
-import Link from 'next/link'
-import Image from 'next/image' // Import the Image component
-import { Home, Search, User, LogIn, UserPlus } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
-import { LogoutButton } from './logout-button'
-import { Button } from './ui/button'
+"use client"; 
 
-export default async function Navbar() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import {LogoutButton } from "@/components/logout-button"; 
+import { Home, Search, User, LogIn, UserPlus, Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { usePathname } from 'next/navigation'; 
+import { useAuth } from '@/app/contexts/auth-context'; // Import useAuth
+
+export default function Navbar() {
+  const { user, isLoading } = useAuth(); // Use AuthContext
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // No longer need local user fetching useEffect
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false); 
+  }, [pathname]);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const NavLink = ({ href, children, className }: { href: string, children: React.ReactNode, className?: string }) => (
+    <Link href={href} className={cn("flex items-center gap-2 group relative text-md font-semibold delay-50 duration-200 ease-in-out text-foreground hover:text-accent", className)}>
+      {children}
+      <span className="absolute -bottom-1 left-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
+      <span className="absolute -bottom-1 right-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
+    </Link>
+  );
+  
+  const MobileNavLink = ({ href, children, onClick }: { href: string, children: React.ReactNode, onClick?: () => void }) => (
+    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-muted text-foreground hover:text-accent text-lg">
+      {children}
+    </Link>
+  );
+
 
   return (
-    <div className="sticky top-0 z-50 pt-3"> {/* Container for sticky positioning and vertical padding */}
-      <nav className="bg-transparent backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto"> {/* Apply new styles here */}
-        <div className="max-w-7xl mx-auto py-2 px-4"> {/* This div might be redundant if max-w-7xl is on nav, but kept for structure if needed */}
+    <div className="sticky top-0 z-50 pt-3">
+      <nav className="bg-transparent backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto py-2 px-4">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center font-bold text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-110 hover:text-accent">
-              <Image src="/logo.png" alt="i_Cooked Logo" width={80} height={80} className="h-17 w-17" />
-              <span>i_Cooked</span>
+            <Link href="/" className="flex items-center font-bold text-2xl sm:text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-105 hover:text-accent">
+              <Image src="/logo.png" alt="i_Cooked Logo" width={60} height={60} className="h-12 w-12 sm:h-14 sm:w-14" />
+              <span className="ml-1 sm:ml-2">i_Cooked</span>
             </Link>
             
-            <div className="flex items-center gap-6">
-              <Link href="/" className="flex items-center gap-2 group relative text-md font-semibold delay-50 duration-200 ease-in-out text-foreground hover:text-accent">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-4 lg:gap-6">
+              <NavLink href="/">
                 <Home size={20} />
                 <span>Home</span>
-                <span className="absolute -bottom-1 left-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-                <span className="absolute -bottom-1 right-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-              </Link>
-              <Link href="/search" className="flex items-center gap-2 group relative text-md font-semibold delay-50 duration-200 ease-in-out text-foreground hover:text-accent">
+              </NavLink>
+              <NavLink href="/search">
                 <Search size={20} />
                 <span>Find Recipes</span>
-                <span className="absolute -bottom-1 left-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-                <span className="absolute -bottom-1 right-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-              </Link>
-              {user ? (
+              </NavLink>
+              {!isLoading && user ? (
                 <>
-                  <Link href="/profile" className="flex items-center gap-2 group relative text-md font-semibold delay-50 duration-200 ease-in-out text-foreground hover:text-accent">
+                  <NavLink href="/profile">
                     <User size={20} />
                     <span>Profile</span>
-                    <span className="absolute -bottom-1 left-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-                    <span className="absolute -bottom-1 right-1/2 w-0 transition-all h-0.5 bg-accent group-hover:w-3/6"></span>
-                  </Link>
+                  </NavLink>
                   <LogoutButton />
                 </>
-              ) : (
+              ) : !isLoading ? (
                 <>
-                  <Button asChild variant={'outline'}>
+                  <Button asChild variant={'outline'} size="sm">
                     <Link href="/auth/login" className="flex items-center gap-2">
-                      <LogIn size={26} />
+                      <LogIn size={20} />
                       <span>Login</span>
                     </Link>
                   </Button>
-                  <Button asChild variant={'outline'}>
+                  <Button asChild variant={'outline'} size="sm">
                     <Link href="/auth/sign-up" className="flex items-center gap-2">
-                      <UserPlus size={26} />
+                      <UserPlus size={20} />
                       <span>Sign up</span>
                     </Link>
                   </Button>
                 </>
-              )}
+              ) : null /* Show nothing while loading to prevent flash of incorrect state */}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button onClick={toggleMobileMenu} variant="ghost" size="icon" aria-label="Toggle menu">
+                {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              </Button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 mx-3 mt-1 bg-background/95 backdrop-blur-sm border border-muted-foreground/20 rounded-lg shadow-xl p-4 space-y-2">
+            <MobileNavLink href="/" onClick={toggleMobileMenu}>
+              <Home size={22} /> Home
+            </MobileNavLink>
+            <MobileNavLink href="/search" onClick={toggleMobileMenu}>
+              <Search size={22} /> Find Recipes
+            </MobileNavLink>
+            {!isLoading && user ? (
+              <>
+                <MobileNavLink href="/profile" onClick={toggleMobileMenu}>
+                  <User size={22} /> Profile
+                </MobileNavLink>
+                <div className="pt-2 w-full">
+                  {/* Ensure LogoutButton in mobile also closes menu if needed, or is styled appropriately */}
+                  <LogoutButton /> 
+                </div>
+              </>
+            ) : !isLoading ? (
+              <>
+                <MobileNavLink href="/auth/login" onClick={toggleMobileMenu}>
+                  <LogIn size={22} /> Login
+                </MobileNavLink>
+                <MobileNavLink href="/auth/sign-up" onClick={toggleMobileMenu}>
+                  <UserPlus size={22} /> Sign up
+                </MobileNavLink>
+              </>
+            ) : null /* Show nothing while loading */}
+          </div>
+        )}
       </nav>
     </div>
-  )
+  );
 }
+
+// Helper to combine class names
+const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');

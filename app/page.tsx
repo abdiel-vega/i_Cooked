@@ -402,7 +402,7 @@ export default function HomePage() {
   if (loading && recipes.length === 0 && !initialFetchInitiated) { // Show main loader only if initial fetch not even initiated and no recipes
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-2xl font-semibold text-foreground mb-4">Loading delicious recipes...</p>
+        <p className="text-xl font-semibold text-foreground mb-4 sm:text-2xl">Loading delicious recipes...</p>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
@@ -411,8 +411,8 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-destructive mb-3">Oops! Something went wrong.</h2>
-        <p className="text-md text-foreground mb-6 max-w-md">{error}</p>
+        <h2 className="text-xl font-semibold text-destructive mb-3 sm:text-2xl">Oops! Something went wrong.</h2>
+        <p className="text-base text-foreground mb-6 max-w-md sm:text-md">{error}</p>
         <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
     );
@@ -420,14 +420,14 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-4xl font-extrabold mb-12 text-center text-foreground tracking-tight">
+      <h1 className="text-3xl font-extrabold mb-8 text-center text-foreground tracking-tight sm:text-4xl sm:mb-12">
         {user && userSavedRecipesForAnalysis.length > 0 ? "Recipes For You" : "Prepare Your Next Meal"}
       </h1>
       
       {recipes.length === 0 && !loading && !isFetchingMore && (
         <div className="text-center text-muted-foreground py-10">
-            <p className="text-xl mb-2">No recipes found at the moment.</p>
-            <p>This might be due to an API key issue or network problem.</p>
+            <p className="text-lg mb-2 sm:text-xl">No recipes found at the moment.</p>
+            <p className="text-sm sm:text-base">This might be due to an API key issue or network problem.</p>
         </div>
       )}
 

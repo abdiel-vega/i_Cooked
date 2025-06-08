@@ -260,7 +260,7 @@ export default function CuisinePage() {
   if (loading || (isAuthLoading && recipes.length === 0)) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-2xl font-semibold text-foreground mb-4">Loading {actualCuisineName || 'cuisine'} recipes...</p>
+        <p className="text-xl font-semibold text-foreground mb-4 sm:text-2xl">Loading {actualCuisineName || 'cuisine'} recipes...</p>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
@@ -269,8 +269,8 @@ export default function CuisinePage() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-destructive mb-3">Oops! Something went wrong.</h2>
-        <p className="text-md text-foreground mb-6 max-w-md">{error}</p>
+        <h2 className="text-xl font-semibold text-destructive mb-3 sm:text-2xl">Oops! Something went wrong.</h2>
+        <p className="text-base text-foreground mb-6 max-w-md sm:text-md">{error}</p>
         <Button onClick={() => actualCuisineName && fetchCuisineRecipes(actualCuisineName, 0)}>Try Again</Button>
         <Button variant="link" onClick={() => router.push('/search')} className="mt-2">Back to Search</Button>
       </div>
@@ -279,17 +279,17 @@ export default function CuisinePage() {
 
   return (
     <div className="container mx-auto px-4">
-      <Button onClick={() => router.back()} className="mb-6 text-md">
+      <Button onClick={() => router.back()} className="mb-4 text-sm sm:mb-6 sm:text-md">
         &larr; Back to Search
       </Button>
-      <h1 className="text-4xl font-extrabold mb-12 text-center text-foreground tracking-tight">
+      <h1 className="text-3xl font-extrabold mb-8 text-center text-foreground tracking-tight sm:text-4xl sm:mb-12">
         {actualCuisineName ? `${actualCuisineName} Recipes` : 'Cuisine Recipes'}
       </h1>
       
       {recipes.length === 0 && !loading && !isFetchingMore && (
         <div className="text-center text-foreground py-10">
-            <p className="text-xl mb-2">No {actualCuisineName} recipes found.</p>
-            <p>Try a different cuisine or check back later!</p>
+            <p className="text-lg mb-2 sm:text-xl">No {actualCuisineName} recipes found.</p>
+            <p className="text-sm sm:text-base">Try a different cuisine or check back later!</p>
         </div>
       )}
 

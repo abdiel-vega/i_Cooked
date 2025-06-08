@@ -295,9 +295,9 @@ export default function ProfilePage() {
   // Display a loading message while checking auth state or if user is null (before redirect)
   if (authLoading || (user && !initialAllergiesLoaded)) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen px-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
-        <p className="ml-3 text-foreground">Loading profile...</p>
+        <p className="ml-3 text-foreground text-sm sm:text-base">Loading profile...</p>
       </div>
     );
   }
@@ -305,10 +305,10 @@ export default function ProfilePage() {
   if (!user) {
     // This case should ideally be handled by the redirect, but as a fallback:
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen px-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground">Access Denied</h2>
-          <p className="mt-2 text-foreground">
+          <h2 className="text-xl font-bold text-foreground sm:text-2xl">Access Denied</h2>
+          <p className="mt-2 text-foreground text-sm sm:text-base">
             You must be logged in to view this page.
           </p>
           <Button onClick={() => router.push('/auth/login')} className="mt-4">
@@ -455,27 +455,27 @@ export default function ProfilePage() {
           }
         }
       `}</style>
-      <Card className="max-w-2xl mx-auto mb-10 no-print">
+      <Card className="max-w-2xl mx-auto mb-8 sm:mb-10 no-print">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
             <div>
-              <CardTitle className="text-2xl">Your Profile</CardTitle>
-              <CardDescription className='text-muted-foreground'>Manage your account settings and preferences.</CardDescription>
+              <CardTitle className="text-xl sm:text-2xl">Your Profile</CardTitle>
+              <CardDescription className='text-muted-foreground text-sm'>Manage your account settings and preferences.</CardDescription>
             </div>
-            <div className="ml-auto bg-background border border-primary px-3 py-1 rounded-md shadow-none transition ease-in-out duration-300 cursor-pointer hover:shadow-lg hover:border-accent hover:scale-105">
-              <p className="text-sm text-foreground ">{user.email}</p>
+            <div className="ml-auto bg-background border border-primary px-3 py-1 rounded-md shadow-none transition ease-in-out duration-300 cursor-pointer hover:shadow-lg hover:border-accent hover:scale-105 mt-2 sm:mt-0">
+              <p className="text-xs text-foreground sm:text-sm ">{user.email}</p>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           <div>
-            <h3 className="text-lg font-medium mb-3">Allergy Preferences</h3>
-            <p className="text-sm text-foreground mb-3">
+            <h3 className="text-lg font-medium mb-2 sm:mb-3">Allergy Preferences</h3>
+            <p className="text-xs text-foreground mb-3 sm:text-sm">
               Select any allergies you have. Recipes with these allergens will show warnings, and personalized recommendations may consider them.
             </p>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {COMMON_ALLERGENS.map((allergen) => (
-                <div key={allergen} className="flex items-center justify-between p-3 border border-background rounded-md bg-background transition duration-300 ease-in-out hover:-translate-y-1 hover:scale-105 hover:border-accent">
+                <div key={allergen} className="flex items-center justify-between p-2.5 border border-background rounded-md bg-background transition duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-102 hover:border-accent sm:p-3">
                   <Label htmlFor={`allergy-${allergen}`} className="text-sm font-medium text-foreground">
                     {allergen}
                   </Label>
@@ -498,12 +498,12 @@ export default function ProfilePage() {
       {/* Shopping List Generator Section */}
       <Card className="max-w-4xl mx-auto mb-10"> 
         <CardHeader className="no-print"> 
-          <CardTitle className="text-2xl text-foreground">Shopping List Generator</CardTitle>
-          <CardDescription>Select recipes from your saved list below, then generate a combined shopping list.</CardDescription>
+          <CardTitle className="text-xl text-foreground sm:text-2xl">Shopping List Generator</CardTitle>
+          <CardDescription className="text-sm">Select recipes from your saved list below, then generate a combined shopping list.</CardDescription>
         </CardHeader>
         <CardContent>
           {selectedRecipesForList.size > 0 && (
-            <div className="mb-4 text-sm text-foreground no-print"> 
+            <div className="mb-3 text-xs text-foreground no-print sm:mb-4 sm:text-sm"> 
               {selectedRecipesForList.size} recipe(s) selected for the shopping list.
             </div>
           )}
@@ -530,35 +530,35 @@ export default function ProfilePage() {
 
           {generatedShoppingList && generatedShoppingList.length > 0 && (
             <div className="mt-6 printable-shopping-list">
-              <div className="flex justify-between items-center mb-4 no-print">
-                <h3 className="text-xl font-semibold">Your Shopping List</h3>
-                <div className="flex space-x-2">
+              <div className="flex flex-col gap-2 mb-4 no-print sm:flex-row sm:justify-between sm:items-center">
+                <h3 className="text-lg font-semibold sm:text-xl">Your Shopping List</h3>
+                <div className="flex space-x-2 flex-wrap gap-y-2">
                   <Button variant="outline" size="sm" onClick={handleCopyShoppingList} aria-label="Copy list">
-                    <ClipboardCopy className="h-4 w-4 mr-1" /> Copy
+                    <ClipboardCopy className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Copy</span>
                   </Button>
                   <Button variant="outline" size="sm" onClick={handlePrintShoppingList} aria-label="Print list">
-                    <Printer className="h-4 w-4 mr-1" /> Print
+                    <Printer className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Print</span>
                   </Button>
                    <Button variant="destructive" size="sm" onClick={handleClearShoppingList} aria-label="Clear list">
-                    <Trash2 className="h-4 w-4 mr-1" /> Clear
+                    <Trash2 className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">Clear</span>
                   </Button>
                 </div>
               </div>
               <h3 className="hidden print:block print-title">Shopping List</h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1 sm:space-y-2">
                 {generatedShoppingList.map(item => (
                   <li 
                     key={item.id} 
                     // Tailwind classes for on-screen display:
-                    className="p-3 border border-background rounded-md bg-background text-sm text-foreground flex justify-between items-start transition duration-300 ease-in-out hover:border-accent"
+                    className="p-2.5 border border-background rounded-md bg-background text-sm text-foreground flex justify-between items-start transition duration-300 ease-in-out hover:border-accent sm:p-3"
                   >
-                    <div className="item-details flex-grow pr-2 sm:pr-4"> {/* Adjusted padding for screen */}
-                      <span className="font-medium item-name block mb-0.5">{item.displayName}</span>
+                    <div className="item-details flex-grow pr-2"> {/* Adjusted padding for screen */}
+                      <span className="font-medium item-name block mb-0.5 text-sm sm:text-base">{item.displayName}</span>
                       <div className="text-xs text-muted-foreground item-source"> {/* Screen: text-xs, gray; Print: styled by .item-source */}
                         From: {item.recipeSources.map(src => src.recipeTitle).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
                       </div>
                     </div>
-                    <span className="text-foreground text-right item-quantity whitespace-nowrap flex-shrink-0 pl-2 sm:pl-0"> {/* Added pl for screen if quantity is long */}
+                    <span className="text-foreground text-right item-quantity whitespace-nowrap flex-shrink-0 pl-1 text-sm sm:text-base sm:pl-2"> {/* Added pl for screen if quantity is long */}
                       {renderShoppingListItemAmountUnit(item)}
                     </span>
                   </li>

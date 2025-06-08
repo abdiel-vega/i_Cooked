@@ -251,7 +251,7 @@ function SearchResultsPageContent() {
   if (loading && !initialLoadComplete) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-2xl font-semibold text-foreground mb-4">Searching for recipes...</p>
+        <p className="text-xl font-semibold text-foreground mb-4 sm:text-2xl">Searching for recipes...</p>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
       </div>
     );
@@ -260,8 +260,8 @@ function SearchResultsPageContent() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <h2 className="text-2xl font-semibold text-destructive mb-3">Search Error</h2>
-        <p className="text-md text-foreground mb-6 max-w-md">{error}</p>
+        <h2 className="text-xl font-semibold text-destructive mb-3 sm:text-2xl">Search Error</h2>
+        <p className="text-base text-foreground mb-6 max-w-md sm:text-md">{error}</p>
         <Link href="/search">
           <Button variant="outline">Try a New Search</Button>
         </Link>
@@ -288,17 +288,17 @@ function SearchResultsPageContent() {
 
   return (
     <div className="container mx-auto px-4">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <header className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold text-foreground mb-2 sm:text-3xl">
           Search Results
         </h1>
         {hasActiveFilters && (
-             <p className="text-lg text-foreground">
+             <p className="text-base text-foreground sm:text-lg">
                 Showing {searchDescription}. ({totalResults} found)
             </p>
         )}
          {!hasActiveFilters && recipes.length === 0 && !loading && (
-             <p className="text-lg text-foreground">
+             <p className="text-base text-foreground sm:text-lg">
                 Please specify search criteria to find recipes.
             </p>
         )}
@@ -306,8 +306,8 @@ function SearchResultsPageContent() {
 
       {recipes.length === 0 && initialLoadComplete && !loading && !isFetchingMore && (
         <div className="text-center text-foreground py-10">
-          <p className="text-xl mb-2">No recipes found matching your criteria.</p>
-          <p>Try adjusting your search terms or filters.</p>
+          <p className="text-lg mb-2 sm:text-xl">No recipes found matching your criteria.</p>
+          <p className="text-sm sm:text-base">Try adjusting your search terms or filters.</p>
            <Link href="/search" className="mt-4 inline-block">
             <Button variant="outline">Back to Search</Button>
           </Link>

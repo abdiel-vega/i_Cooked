@@ -50,7 +50,7 @@ export function RecipeDetailModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
         {modalLoading && (
-          <div className="flex justify-center items-center h-96">
+          <div className="flex justify-center items-center h-96 p-4 sm:p-6">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent">
               <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
             </div>
@@ -58,7 +58,7 @@ export function RecipeDetailModal({
           </div>
         )}
         {modalError && !modalLoading && (
-          <div className="p-8 text-center">
+          <div className="p-4 text-center sm:p-8">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-destructive">Error</DialogTitle>
             </DialogHeader>
@@ -70,12 +70,12 @@ export function RecipeDetailModal({
         )}
         {selectedRecipe && !modalLoading && !modalError && (
           <>
-            <DialogHeader className="p-6 border-b border-background">
-              <DialogTitle className="text-2xl font-bold text-accent">{selectedRecipe.title}</DialogTitle>
+            <DialogHeader className="p-4 border-b border-background sm:p-6">
+              <DialogTitle className="text-xl font-bold text-accent sm:text-2xl">{selectedRecipe.title}</DialogTitle>
             </DialogHeader>
-            <div className="overflow-y-auto flex-grow p-6 space-y-5 group">
+            <div className="overflow-y-auto flex-grow p-4 space-y-4 sm:p-6 sm:space-y-5 group">
               {selectedRecipe.image && (
-                <div className="relative h-72 w-full rounded-lg overflow-hidden shadow-md mb-6">
+                <div className="relative h-60 w-full rounded-lg overflow-hidden shadow-md mb-4 sm:h-72 sm:mb-6">
                   <img 
                     src={selectedRecipe.image} 
                     alt={selectedRecipe.title} 
@@ -100,14 +100,14 @@ export function RecipeDetailModal({
               
               {selectedRecipe.summary && (
                   <div>
-                      <h4 className="font-semibold text-lg mb-1 text-accent">Summary:</h4>
+                      <h4 className="font-semibold text-md mb-1 text-accent sm:text-lg">Summary:</h4>
                       <div className="prose prose-sm max-w-none text-foreground [&_a:hover]:text-accent" dangerouslySetInnerHTML={{ __html: selectedRecipe.summary }} />
                   </div>
               )}
               
               {selectedRecipe.extendedIngredients && selectedRecipe.extendedIngredients.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-lg mb-2 text-accent">Ingredients:</h4>
+                  <h4 className="font-semibold text-md mb-2 text-accent sm:text-lg">Ingredients:</h4>
                   <ul className="list-disc list-inside pl-4 space-y-1 text-foreground">
                     {selectedRecipe.extendedIngredients.map(ingredient => (
                       <li key={ingredient.id || ingredient.name || ingredient.original} className="text-sm">{ingredient.original}</li>
@@ -118,10 +118,10 @@ export function RecipeDetailModal({
 
               {selectedRecipe.analyzedInstructions && selectedRecipe.analyzedInstructions.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-lg mt-3 mb-2 text-accent">Instructions:</h4>
+                  <h4 className="font-semibold text-md mt-3 mb-2 text-accent sm:text-lg">Instructions:</h4>
                   {selectedRecipe.analyzedInstructions.map((instructionSet, index) => (
                     <div key={index} className="mb-4">
-                      {instructionSet.name && <h5 className="font-medium text-md mb-1 text-foreground">{instructionSet.name}</h5>}
+                      {instructionSet.name && <h5 className="font-medium text-base mb-1 text-foreground sm:text-md">{instructionSet.name}</h5>}
                       <ol className="list-decimal list-inside pl-4 space-y-1.5 text-foreground text-sm">
                         {instructionSet.steps.map(step => (
                           <li key={step.number}>{step.step}</li>
@@ -135,7 +135,7 @@ export function RecipeDetailModal({
                   <p className="text-foreground">Detailed information for this recipe is not available.</p>
               )}
             </div>
-            <DialogFooter className="p-6 border-t border-background flex justify-end space-x-2">
+            <DialogFooter className="p-4 border-t border-background flex flex-col space-y-2 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0">
               <Button 
                   variant={isThisRecipeSaved ? "destructive" : "outline"}
                   onClick={(e) => { 

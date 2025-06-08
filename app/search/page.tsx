@@ -57,17 +57,17 @@ export default function SearchPage() {
 
   return (
     <div className="container mx-auto">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Discover Recipes</h1>
-        <p className="text-lg text-foreground">Find and learn how to cook your next meal!</p>
+      <header className="mb-6 text-center sm:mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2 sm:text-4xl">Discover Recipes</h1>
+        <p className="text-base text-foreground sm:text-lg">Find and learn how to cook your next meal!</p>
       </header>
 
       {/* Search Bar and Filters Section */}
-      <section className="mb-10 p-6 bg-muted rounded-xl shadow-lg">
-        <div className="mb-6">
+      <section className="mb-8 p-4 bg-muted rounded-xl shadow-lg sm:p-6 sm:mb-10">
+        <div className="mb-4 sm:mb-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Adjusted grid to 3 cols for filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"> {/* Adjusted grid to 3 cols for filters */}
           {/* Diet Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -135,7 +135,7 @@ export default function SearchPage() {
           </DropdownMenu>
         </div>
         <Button
-          className="mt-6 w-full bg-primary hover:bg-accent text-background font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out"
+          className="mt-4 w-full bg-primary hover:bg-accent text-background font-semibold py-3 px-4 rounded-lg transition duration-150 ease-in-out sm:mt-6"
           onClick={handleSearch}
         >
           Search Recipes
@@ -144,15 +144,15 @@ export default function SearchPage() {
 
       {/* Cuisine Sections */}
       <section>
-        <h2 className="text-3xl font-semibold mb-6 text-foreground">Browse by Cuisine</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <h2 className="text-2xl font-semibold mb-4 text-foreground sm:text-3xl sm:mb-6">Browse by Cuisine</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
           {CUISINES.map((cuisine) => (
             <Link
               key={cuisine}
               href={`/search/cuisine/${encodeURIComponent(cuisine.toLowerCase().replace(/\s+/g, '-'))}`}
-              className="group block p-4 bg-muted rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-muted hover:border-accent"
+              className="group block p-3 bg-muted rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border border-muted hover:border-accent sm:p-4"
             >
-              <h3 className="text-md sm:text-lg font-medium text-foreground group-hover:text-accent transition-colors duration-300 text-center">
+              <h3 className="text-base font-medium text-foreground group-hover:text-accent transition-colors duration-300 text-center sm:text-md">
                 {cuisine}
               </h3>
             </Link>
