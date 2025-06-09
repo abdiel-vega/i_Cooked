@@ -25,7 +25,7 @@ export async function getUserAllergies(userId: string): Promise<Allergen[]> {
       throw error;
     }
     return (data?.allergies as Allergen[]) || [];
-  } catch (_error) {
+  } catch {
     return []; // fallback to empty array on any unexpected error
   }
 }
