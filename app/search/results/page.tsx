@@ -77,6 +77,7 @@ function SearchResultsPageContent() {
   const query = searchParams.get('query') || undefined;
   const cuisine = searchParams.get('cuisine') || undefined;
   const diet = searchParams.get('diet') || undefined;
+  const type = searchParams.get('type') || undefined; // Get meal type
   const maxReadyTimeString = searchParams.get('maxReadyTime');
   const maxReadyTime = maxReadyTimeString ? parseInt(maxReadyTimeString, 10) : undefined;
   // const [appliedIntolerances, setAppliedIntolerances] = useState<string[]>([]); // No longer needed
@@ -135,6 +136,7 @@ function SearchResultsPageContent() {
       query,
       cuisine,
       diet,
+      type, // Pass meal type
       maxReadyTime,
       // intolerances: intoleranceParams, // Removed: No longer filtering by intolerances
       number: RECIPES_PER_PAGE,
@@ -156,7 +158,7 @@ function SearchResultsPageContent() {
       setIsFetchingMore(false);
       if (initialFetch) setInitialLoadComplete(true);
     }
-  }, [query, cuisine, diet, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]);
+  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]); // Added type
 
   useEffect(() => {
     // Trigger initial fetch when search params change OR when allergies are loaded (if user is logged in and auth is resolved)
@@ -165,7 +167,7 @@ function SearchResultsPageContent() {
         fetchRecipes(0, true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, cuisine, diet, maxReadyTime, currentUserAllergies, isAuthLoading]); // Removed 'user' as isAuthLoading covers its resolution for allergy fetching. fetchRecipes itself depends on user for saved status.
+  }, [query, cuisine, diet, type, maxReadyTime, currentUserAllergies, isAuthLoading]); // Added type
 
 
    useEffect(() => {
@@ -277,11 +279,12 @@ function SearchResultsPageContent() {
   //   maxReadyTime ? `ready in ${maxReadyTime} mins or less` : "",
   //   appliedIntolerances.length > 0 ? `excluding ${appliedIntolerances.join(', ')}` : ""
   // ].filter(Boolean).join(", ");
-  const hasActiveFilters = query || cuisine || diet || maxReadyTime;
+  const hasActiveFilters = query || cuisine || diet || type || maxReadyTime;
   const searchDescription = [
     query ? `results for "${query}"` : "recipes",
     cuisine ? `in ${cuisine} cuisine` : "",
     diet ? `fitting ${diet} diet` : "",
+    type ? `of type ${type}` : "", // Add meal type to description
     maxReadyTime ? `ready in ${maxReadyTime} mins or less` : "",
   ].filter(Boolean).join(", ");
 

@@ -86,6 +86,7 @@ export interface SearchParams {
   query?: string;
   cuisine?: string | string[];
   diet?: string | string[];
+  type?: string; // Added meal type
   maxReadyTime?: number;
   number?: number;
   offset?: number;
@@ -122,6 +123,11 @@ export async function searchRecipesWithFilters(
         ? params.diet.join(",")
         : params.diet;
       if (diets) searchParamsObj.append("diet", diets);
+    }
+
+    if (params.type) {
+      // Add type parameter
+      searchParamsObj.append("type", params.type);
     }
 
     if (params.intolerances) {
@@ -309,4 +315,21 @@ export const DIETS = [
   "Primal",
   "Low FODMAP",
   "Whole30",
+];
+
+export const MEAL_TYPES = [
+  "main course",
+  "side dish",
+  "dessert",
+  "appetizer",
+  "salad",
+  "bread",
+  "breakfast",
+  "soup",
+  "beverage",
+  "sauce",
+  "marinade",
+  "fingerfood",
+  "snack",
+  "drink",
 ];

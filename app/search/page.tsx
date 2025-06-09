@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CUISINES, DIETS as DIET_OPTIONS } from '@/lib/spoonacular'; // Import from lib
+import { CUISINES, DIETS as DIET_OPTIONS, MEAL_TYPES } from '@/lib/spoonacular'; // Import from lib
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,12 +37,14 @@ export default function SearchPage() {
   const [selectedDiet, setSelectedDiet] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
   const [selectedReadyTime, setSelectedReadyTime] = useState('');
+  const [selectedMealType, setSelectedMealType] = useState(''); // Added state for meal type
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchQuery) params.append('query', searchQuery);
     if (selectedDiet) params.append('diet', selectedDiet);
     if (selectedCuisine) params.append('cuisine', selectedCuisine);
+    if (selectedMealType) params.append('type', selectedMealType); // Add meal type to params
     if (selectedReadyTime) {
       if (selectedReadyTime === "120+") {
         params.append('maxReadyTime', '120'); // Or a higher number, or handle as "any"
@@ -67,7 +69,7 @@ export default function SearchPage() {
         <div className="mb-4 sm:mb-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"> {/* Adjusted grid to 3 cols for filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"> {/* Adjusted grid to 4 cols for filters */}
           {/* Diet Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -128,6 +130,28 @@ export default function SearchPage() {
                 {READY_TIME_OPTIONS.map((time) => (
                   <DropdownMenuRadioItem key={time} value={time}>
                     {time === "120+" ? "120+" : time}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Meal Type Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="filter" className="w-full justify-between">
+                {selectedMealType || "Select Meal Type"}
+                <span className="ml-2 text-xs opacity-70">▼</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Meal Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedMealType} onValueChange={setSelectedMealType}>
+                <DropdownMenuRadioItem value="">Any</DropdownMenuRadioItem>
+                {MEAL_TYPES.map((type) => (
+                  <DropdownMenuRadioItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>

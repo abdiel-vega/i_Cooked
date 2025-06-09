@@ -33,7 +33,7 @@ export default function Navbar() {
   );
   
   const MobileNavLink = ({ href, children, onClick }: { href: string, children: React.ReactNode, onClick?: () => void }) => (
-    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-muted text-foreground hover:text-accent text-lg">
+    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-muted text-foreground text-lg">
       {children}
     </Link>
   );
@@ -41,10 +41,10 @@ export default function Navbar() {
 
   return (
     <div className="sticky top-0 z-50 pt-3">
-      <nav className="bg-transparent backdrop-blur-md border border-muted-foreground/20 rounded-xl shadow-lg max-w-7xl mx-auto">
+      <nav className="bg-transparent backdrop-blur-md border border-transparent rounded-xl shadow-lg max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto py-2 px-4">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center font-bold text-2xl sm:text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-105 hover:text-accent">
+            <Link href="/" className="flex items-center font-bold text-2xl sm:text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-105">
               <Image src="/logo.png" alt="i_Cooked Logo" width={60} height={60} className="h-12 w-12 sm:h-14 sm:w-14" />
               <span className="ml-1 sm:ml-2">i_Cooked</span>
             </Link>
