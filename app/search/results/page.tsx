@@ -84,7 +84,7 @@ function SearchResultsPageContent() {
       }
     });
     setSavedRecipeIds(newSavedIds);
-  }, [user]); // Removed savedRecipeIds from dependency array
+  }, [user]);
 
   // effect to fetch user allergies
   useEffect(() => {
@@ -146,7 +146,7 @@ function SearchResultsPageContent() {
       setIsFetchingMore(false);
       if (initialFetch) setInitialLoadComplete(true);
     }
-  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, isAuthLoading]); // Removed currentUserAllergies, added fetchRecipes to dependency array
+  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus]);
 
   useEffect(() => {
     // trigger initial fetch on search param change or when allergies load (if user logged in)
@@ -154,7 +154,7 @@ function SearchResultsPageContent() {
     if (!isAuthLoading) { // ensure auth state is resolved before fetching
         fetchRecipes(0, true);
     }
-  }, [query, cuisine, diet, type, maxReadyTime, isAuthLoading, fetchRecipes]); // Removed currentUserAllergies, added fetchRecipes to dependency array
+  }, [query, cuisine, diet, type, maxReadyTime, isAuthLoading, fetchRecipes]);
 
 
    useEffect(() => {

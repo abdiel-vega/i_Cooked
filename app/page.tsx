@@ -447,7 +447,7 @@ export default function HomePage() {
       )}
 
       {!hasMore && recipes.length > 0 && !isFetchingMore && (
-         <p className="text-center text-muted-foreground py-8">You've seen all available random recipes for now!</p>
+         <p className="text-center text-muted-foreground py-8">You&apos;ve seen all available random recipes for now!</p>
       )}
 
       <RecipeDetailModal

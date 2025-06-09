@@ -135,7 +135,7 @@ export default function CuisinePage() {
         setIsFetchingMore(false);
       }
     }
-  }, [user, updateSavedRecipeStatusForDisplayedRecipes, currentUserAllergies]); 
+  }, [user, updateSavedRecipeStatusForDisplayedRecipes]); 
 
   useEffect(() => {
     if (actualCuisineName && !isAuthLoading) { // ensure auth state and allergies are potentially loaded

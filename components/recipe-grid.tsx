@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { Allergen } from '@/lib/allergens';
 import { AlertTriangle, ImageIcon, LeafyGreen, MilkOff, Vegan, WheatOff } from 'lucide-react';
+import Image from 'next/image';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -91,10 +92,12 @@ export function RecipeGrid({
               onClick={() => onRecipeClick(currentRecipeId)}
             >
               {recipe.image ? (
-                <img
+                <Image
                   src={recipe.image}
                   alt={recipe.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  layout="fill"
+                  objectFit="cover"
+                  className="transition-transform duration-500 group-hover:scale-110"
                 />
               ) : (
                 <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110">

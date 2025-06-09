@@ -21,6 +21,7 @@ import { AlertTriangle, ImageIcon, ShoppingCart } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RecipeDetailModal } from '@/components/recipe-detail-modal';
+import Image from 'next/image';
 
 // helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
@@ -312,7 +313,13 @@ export default function SavedRecipesList({
             <div onClick={() => handleRecipeCardClick(recipe.id)} className="cursor-pointer">
               <div className="relative h-56 w-full overflow-hidden"> {/* image container, matches recipegrid */}
                 {recipe.image ? (
-                  <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <Image 
+                    src={recipe.image} 
+                    alt={recipe.title} 
+                    layout="fill"
+                    objectFit="cover"
+                    className="transition-transform duration-500 group-hover:scale-110" 
+                  />
                 ) : (
                   <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110"> {/* placeholder for missing image, matches recipegrid */}
                     <ImageIcon size={40} className="mb-2" />

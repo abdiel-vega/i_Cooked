@@ -11,6 +11,7 @@ import { Recipe } from '@/lib/spoonacular';
 import { User } from '@supabase/supabase-js';
 import { Allergen } from '@/lib/allergens';
 import { AlertTriangle } from 'lucide-react';
+import Image from 'next/image';
 
 interface RecipeDetailModalProps {
   isOpen: boolean;
@@ -76,10 +77,12 @@ export function RecipeDetailModal({
             <div className="overflow-y-auto flex-grow p-4 space-y-4 sm:p-6 sm:space-y-5 group">
               {selectedRecipe.image && (
                 <div className="relative h-60 w-full rounded-lg overflow-hidden shadow-md mb-4 sm:h-72 sm:mb-6">
-                  <img 
+                  <Image 
                     src={selectedRecipe.image} 
                     alt={selectedRecipe.title} 
-                    className="w-full h-full object-cover"
+                    layout="fill"
+                    objectFit="cover"
+                    className="w-full h-full"
                   />
                 </div>
               )}
@@ -109,8 +112,8 @@ export function RecipeDetailModal({
                 <div>
                   <h4 className="font-semibold text-md mb-2 text-accent sm:text-lg">Ingredients:</h4>
                   <ul className="list-disc list-inside pl-4 space-y-1 text-foreground">
-                    {selectedRecipe.extendedIngredients.map(ingredient => (
-                      <li key={ingredient.id || ingredient.name || ingredient.original} className="text-sm">{ingredient.original}</li>
+                    {selectedRecipe.extendedIngredients.map((ingredient, index) => (
+                      <li key={`ingredient-${index}-${ingredient.id ?? ingredient.originalName ?? ingredient.name ?? 'unknown'}`} className="text-sm">{ingredient.original}</li>
                     ))}
                   </ul>
                 </div>

@@ -56,7 +56,7 @@ function renderShoppingListItemAmountUnit(item: ShoppingListItem): string {
 }
 
 export default function ProfilePage() {
-  const { user, logout, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [selectedAllergies, setSelectedAllergies] = useState<Set<Allergen>>(new Set());
   const [isSavingAllergies, setIsSavingAllergies] = useState(false);
