@@ -24,14 +24,16 @@ import { RecipeGrid } from '@/components/recipe-grid';
 import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
 import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
+import Link from 'next/link'
 
 const INITIAL_RECIPE_COUNT = 12;
 const MORE_RECIPE_COUNT = 8;
 
 // Helper function to analyze user preferences
-function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[], topDiets: string[] } {
+function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[], topDiets: string[], topDishTypes: string[] } {
   const cuisineCounts: Record<string, number> = {};
   const dietCounts: Record<string, number> = {};
+  const dishTypeCounts: Record<string, number> = {};
 
   savedRecipes.forEach(recipe => {
     recipe.cuisines?.forEach(cuisine => {
@@ -39,6 +41,9 @@ function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[]
     });
     recipe.diets?.forEach(diet => {
       dietCounts[diet] = (dietCounts[diet] || 0) + 1;
+    });
+    recipe.dishTypes?.forEach(dishType => {
+      dishTypeCounts[dishType] = (dishTypeCounts[dishType] || 0) + 1;
     });
   });
 
@@ -49,11 +54,16 @@ function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[]
   const sortedDiets = Object.entries(dietCounts)
     .sort(([, a], [, b]) => b - a)
     .map(([diet]) => diet);
+  
+  const sortedDishTypes = Object.entries(dishTypeCounts)
+    .sort(([,a], [,b]) => b - a)
+    .map(([dishType]) => dishType);
 
-  // Return top 2 cuisines and top 1 diet, for example
+  // Return top 2 cuisines, top 1 diet, and top 2 dish types, for example
   return {
     topCuisines: sortedCuisines.slice(0, 2),
     topDiets: sortedDiets.slice(0, 1),
+    topDishTypes: sortedDishTypes.slice(0, 2),
   };
 }
 
@@ -97,7 +107,10 @@ export default function HomePage() {
 
   const [userSavedRecipesForAnalysis, setUserSavedRecipesForAnalysis] = useState<Recipe[]>([]);
   const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
-  const [currentPersonalizedOffset, setCurrentPersonalizedOffset] = useState(0);
+  // const [currentPersonalizedOffset, setCurrentPersonalizedOffset] = useState(0); // No longer needed for main grid
+
+  // State for personalized suggestions UI
+  const [personalizedSuggestions, setPersonalizedSuggestions] = useState<{ topCuisines: string[], topDiets: string[], topDishTypes: string[] } | null>(null);
 
   // State to manage loading of initial dependencies
   const [dataDepsStatus, setDataDepsStatus] = useState({
@@ -162,6 +175,16 @@ export default function HomePage() {
     }
   }, [user, isAuthLoading]);
 
+  // Effect to generate personalized suggestions for the new UI section
+  useEffect(() => {
+    if (user && userSavedRecipesForAnalysis.length > 0) {
+      const suggestions = analyzeUserPreferences(userSavedRecipesForAnalysis);
+      setPersonalizedSuggestions(suggestions);
+    } else {
+      setPersonalizedSuggestions(null);
+    }
+  }, [user, userSavedRecipesForAnalysis]);
+
 
   const updateSavedRecipeStatusForDisplayedRecipes = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
@@ -184,97 +207,44 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       setInitialLoadAnimationComplete(false);
-      // currentPersonalizedOffset is reset based on logic below
-    } else { // Loading more
-      if (isFetchingMore || !hasMore) return; // isFetchingMore is component state
+      setRecipes([]); // Clear recipes for a fresh load
+    } else {
+      if (isFetchingMore || !hasMore) return;
       setIsFetchingMore(true);
     }
 
     const recipeCount = isInitialLoad ? INITIAL_RECIPE_COUNT : MORE_RECIPE_COUNT;
     let newRawRecipes: Recipe[] = [];
-    let apiTotalResults: number | undefined = undefined;
-    let newOffsetForPersonalizedPath: number = isInitialLoad ? 0 : currentPersonalizedOffset;
-
-    const canPersonalize = user && userSavedRecipesForAnalysis.length > 0;
-    let preferences: { topCuisines: string[], topDiets: string[] } | null = null;
-
-    if (canPersonalize) {
-      preferences = analyzeUserPreferences(userSavedRecipesForAnalysis);
-    }
-    
-    const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy));
-
-    const usePersonalizedSearchLogic = preferences && (preferences.topCuisines.length > 0 || preferences.topDiets.length > 0);
-    const shouldAttemptPersonalized = usePersonalizedSearchLogic || (user && intoleranceParams.length > 0);
-
 
     try {
-      if (shouldAttemptPersonalized) {
-        const offsetToUse = isInitialLoad ? 0 : currentPersonalizedOffset;
-        const result = await fetchPersonalizedRecipes({
-          cuisines: preferences?.topCuisines || [],
-          diets: preferences?.topDiets || [],
-          intolerances: intoleranceParams,
-          count: recipeCount + 5, // Fetch a bit more to allow for filtering duplicates
-          offset: offsetToUse,
-        });
-        newRawRecipes = result.recipes;
-        apiTotalResults = result.totalResults;
-        newOffsetForPersonalizedPath = offsetToUse + result.recipes.length;
-      } else {
-        newRawRecipes = await getRandomRecipes(recipeCount, undefined, intoleranceParams);
-      }
+      // Fetch random recipes without allergy filtering for the main grid
+      newRawRecipes = await getRandomRecipes(recipeCount + 5); // Fetch a bit more for de-duplication
 
-      // De-duplicate newRawRecipes by ID before any further processing
       const seenIdsForRaw = new Set<number>();
       const deDupedNewRawRecipes = newRawRecipes.filter(r => {
-        if (r.id == null) return false; 
+        if (r.id == null) return false;
         if (seenIdsForRaw.has(r.id)) return false;
         seenIdsForRaw.add(r.id);
         return true;
       });
-      newRawRecipes = deDupedNewRawRecipes; // Use the de-duplicated list
 
       const currentDisplayedRecipeIds = new Set(isInitialLoad ? [] : recipes.map(r => r.id!));
-      const uniqueNewRecipes = newRawRecipes
+      const uniqueNewRecipes = deDupedNewRawRecipes
         .filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!))
         .slice(0, recipeCount);
 
-
       if (isInitialLoad) {
         setRecipes(uniqueNewRecipes);
-        if (shouldAttemptPersonalized) {
-          setCurrentPersonalizedOffset(newOffsetForPersonalizedPath);
-          setHasMore(uniqueNewRecipes.length > 0 && (newOffsetForPersonalizedPath < (apiTotalResults ?? Infinity)));
-        } else {
-          setHasMore(uniqueNewRecipes.length > 0);
-        }
-      } else { // Loading more
+      } else {
         setRecipes(prev => [...prev, ...uniqueNewRecipes]);
-        if (shouldAttemptPersonalized) {
-          setCurrentPersonalizedOffset(newOffsetForPersonalizedPath);
-          setHasMore(uniqueNewRecipes.length > 0 && (currentPersonalizedOffset + uniqueNewRecipes.length < (apiTotalResults ?? Infinity)));
-        } else {
-          setHasMore(uniqueNewRecipes.length > 0);
-        }
       }
       
+      // For random recipes, we assume there's always more unless an API call returns empty or fails.
+      // The slice(0, recipeCount) ensures we don't add too many if deDupedNewRawRecipes was large.
+      setHasMore(uniqueNewRecipes.length > 0 && uniqueNewRecipes.length === recipeCount); 
+
       if (uniqueNewRecipes.length > 0) {
         await updateSavedRecipeStatusForDisplayedRecipes(uniqueNewRecipes);
-      }
-
-      if (isInitialLoad && uniqueNewRecipes.length === 0 && (apiTotalResults === 0 || !shouldAttemptPersonalized)) {
-         if(shouldAttemptPersonalized) {
-            console.log("Personalized/filtered search yielded no new recipes, trying purely random for initial load.");
-            const randomFallbackRecipes = await getRandomRecipes(INITIAL_RECIPE_COUNT, undefined, intoleranceParams);
-            const trulyUniqueRandom = randomFallbackRecipes.filter(r => r.id != null && !currentDisplayedRecipeIds.has(r.id!)); // currentDisplayedRecipeIds is empty here
-            setRecipes(trulyUniqueRandom);
-            setHasMore(trulyUniqueRandom.length > 0);
-            setCurrentPersonalizedOffset(0); 
-            if (trulyUniqueRandom.length > 0) {
-                await updateSavedRecipeStatusForDisplayedRecipes(trulyUniqueRandom);
-            }
-         }
       }
 
     } catch (err: any) {
@@ -290,9 +260,11 @@ export default function HomePage() {
       }
     }
   }, [
-    user, userSavedRecipesForAnalysis, currentUserAllergies, 
-    currentPersonalizedOffset, hasMore, recipes, 
-    updateSavedRecipeStatusForDisplayedRecipes, isFetchingMore
+    recipes, // Keep recipes to check currentDisplayedRecipeIds when loading more
+    hasMore, 
+    isFetchingMore,
+    updateSavedRecipeStatusForDisplayedRecipes
+    // Removed user, userSavedRecipesForAnalysis, currentUserAllergies, currentPersonalizedOffset from main grid fetch deps
   ]);
 
   // Effect for initial data load, depends on all dependencies being ready
@@ -420,8 +392,33 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4">
+      {/* Personalized Suggestions Section */}
+      {user && personalizedSuggestions && (personalizedSuggestions.topCuisines.length > 0 || personalizedSuggestions.topDiets.length > 0 || personalizedSuggestions.topDishTypes.length > 0) && (
+        <div className="mb-8 p-4 border border-accent rounded-lg bg-muted no-print">
+          <h2 className="text-xl font-semibold mb-3 text-accent">Browse Recipes For You</h2>
+          <div className="flex flex-wrap gap-2">
+            {personalizedSuggestions.topCuisines.map(cuisine => (
+              <Button key={`cuisine-${cuisine}`} variant="outline" size="sm" asChild>
+                <Link href={`/search?cuisine=${encodeURIComponent(cuisine.toLowerCase())}`}>{cuisine}</Link>
+              </Button>
+            ))}
+            {personalizedSuggestions.topDiets.map(diet => (
+              <Button key={`diet-${diet}`} variant="outline" size="sm" asChild>
+                <Link href={`/search?diet=${encodeURIComponent(diet.toLowerCase())}`}>{diet}</Link>
+              </Button>
+            ))}
+            {personalizedSuggestions.topDishTypes.map(dishType => (
+              <Button key={`dishType-${dishType}`} variant="outline" size="sm" asChild>
+                <Link href={`/search?type=${encodeURIComponent(dishType.toLowerCase())}`}>{dishType}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <h1 className="text-3xl font-extrabold mb-8 text-center text-foreground tracking-tight sm:text-4xl sm:mb-12">
-        {user && userSavedRecipesForAnalysis.length > 0 ? "Recipes For You" : "Prepare Your Next Meal"}
+        {/* Title can remain generic or be updated if needed */}
+        Prepare Your Next Meal
       </h1>
       
       {recipes.length === 0 && !loading && !isFetchingMore && (
@@ -441,7 +438,7 @@ export default function HomePage() {
         isAuthLoading={isAuthLoading}
         gridOverallLoading={loading && recipes.length === 0}
         animationType={!initialLoadAnimationComplete && !isFetchingMore ? 'initial' : 'subsequent'}
-        userAllergies={currentUserAllergies} // Pass allergies to grid
+        userAllergies={currentUserAllergies} // Still pass for warnings
       />
 
       {isFetchingMore && (
@@ -452,7 +449,7 @@ export default function HomePage() {
       )}
 
       {!hasMore && recipes.length > 0 && !isFetchingMore && (
-         <p className="text-center text-muted-foreground py-8">You've seen all available recipes for now!</p>
+         <p className="text-center text-muted-foreground py-8">You've seen all available random recipes for now!</p>
       )}
 
       {/* Recipe Details Modal */}

@@ -4,14 +4,6 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { searchRecipesWithFilters, Recipe, getRecipeDetails, SearchParams } from '@/lib/spoonacular';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { useAuth } from '@/app/contexts/auth-context';
 import { 
   saveRecipeToSupabase, 
@@ -22,9 +14,8 @@ import { toast } from "sonner";
 import Link from 'next/link';
 // import { RecipeGrid } from '@/components/recipe-grid'; // Not used here, page has its own grid
 import { RecipeGrid } from '@/components/recipe-grid'; // Import RecipeGrid
-import { Allergen, getAllergenQueryValue, COMMON_ALLERGENS as ALL_ALLERGENS_LIST } from '@/lib/allergens';
+import { Allergen } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { AlertTriangle, ImageIcon } from 'lucide-react'; // For warning icon
 import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
 
 const RECIPES_PER_PAGE = 12;
