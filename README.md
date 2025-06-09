@@ -1,13 +1,14 @@
 # i_Cooked - Your Personal Recipe Management Hub
 
-Welcome to **i_Cooked**, a web application designed to help you discover, save, and organize your favorite recipes, manage dietary preferences, and simplify your grocery shopping!
+**i_Cooked**, a web application made to help you discover, save, and organize your favorite recipes. Motivate yourself
+to find and cook new food!
 
 ![Home Page](docs/home-page.png)
-_Fig 1: i_Cooked Home Page - "Prepare Your Next Meal" section._
+_Home Page - "Prepare Your Next Meal"_
 
 ## Overview
 
-i_Cooked is a feature-rich platform for food enthusiasts. Whether you're looking for inspiration for your next meal, trying to manage specific dietary needs, or want an easy way to create shopping lists, i_Cooked has you covered. It leverages the Spoonacular API to provide a vast database of recipes and nutritional information.
+i_Cooked is a platform for food and cooking enthusiasts. Whether you're looking for inspiration for your next meal, trying to manage specific dietary needs, or want an easy way to create shopping lists, i_Cooked has you covered. It leverages the Spoonacular API to provide a vast database of recipes and nutritional information.
 
 ## Key Features
 
@@ -28,7 +29,7 @@ i_Cooked is a feature-rich platform for food enthusiasts. Whether you're looking
 - **Clear Results Display:** View search results in an easy-to-navigate grid, complete with essential recipe information.
 
 ![Search Page](docs/search-page.png)
-_Fig 2: Discover Recipes page with search and filter options._
+_Discover Recipes page with search and filter options._
 
 ### 3. User Accounts & Personalization
 
@@ -39,7 +40,7 @@ _Fig 2: Discover Recipes page with search and filter options._
   - Recipes that potentially contain your specified allergens will display clear warnings.
 
 ![Profile Page](docs/profile-page.png)
-_Fig 3: User Profile page showing allergy preferences._
+_User Profile Page showing allergy preferences._
 
 ### 4. Save & Organize Recipes
 
@@ -56,7 +57,7 @@ _Fig 3: User Profile page showing allergy preferences._
   - Options to **Copy** the list to your clipboard, **Print** it for offline use, or **Clear** the list.
 
 ![Shopping List Page](docs/shopping-list-page.png)
-_Fig 4: Shopping List Generator with a generated list._
+_Shopping List Generator with a generated list._
 
 ### 6. Interactive Recipe Viewing
 
