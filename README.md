@@ -1,105 +1,87 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# i_Cooked - Your Personal Recipe Management Hub
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+Welcome to **i_Cooked**, a web application designed to help you discover, save, and organize your favorite recipes, manage dietary preferences, and simplify your grocery shopping!
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+![Home Page](docs/images/home-page.png)
+_Fig 1: i_Cooked Home Page - "Prepare Your Next Meal" section._
 
-## Features
+## Overview
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+i_Cooked is a feature-rich platform for food enthusiasts. Whether you're looking for inspiration for your next meal, trying to manage specific dietary needs, or want an easy way to create shopping lists, i_Cooked has you covered. It leverages the Spoonacular API to provide a vast database of recipes and nutritional information.
 
-## Demo
+## Key Features
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### 1. Recipe Discovery & Personalized Suggestions
 
-## Deploy to Vercel
+- **Dynamic Home Page:** Get inspired with a fresh batch of random recipe suggestions every time you visit.
+- **Personalized Recommendations:** For logged-in users, i_Cooked analyzes your saved recipes to suggest new dishes based on your preferred cuisines, diets, and meal types.
+- **Browse by Cuisine:** Explore diverse culinary traditions by browsing recipes from various cuisines like Italian, Mexican, Indian, and more.
 
-Vercel deployment will guide you through creating a Supabase account and project.
+### 2. Advanced Recipe Search & Filtering
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- **Comprehensive Search:** Find recipes by keywords, ingredients, or specific dish names.
+- **Powerful Filters:** Narrow down your search results by:
+  - Diet (e.g., Vegetarian, Vegan, Gluten-Free)
+  - Cuisine
+  - Maximum ready time
+  - Meal type (e.g., breakfast, lunch, dinner, dessert)
+- **Clear Results Display:** View search results in an easy-to-navigate grid, complete with essential recipe information.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+![Search Page](docs/images/search-page.png)
+_Fig 2: Discover Recipes page with search and filter options._
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+### 3. User Accounts & Personalization
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+- **Secure Authentication:** Easy sign-up, login, and logout functionality.
+- **User Profile:** Manage your account details and preferences in one place.
+- **Allergy Management:**
+  - Select and save common allergies (e.g., Dairy, Gluten, Peanuts, Shellfish).
+  - Recipes that potentially contain your specified allergens will display clear warnings.
 
-## Clone and run locally
+![Profile Page](docs/images/profile-page.png)
+_Fig 3: User Profile page showing allergy preferences._
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+### 4. Save & Organize Recipes
 
-2. Create a Next.js app using the Supabase Starter template npx command
+- **Save Favorites:** Easily save any recipe you like to your personal collection with a single click.
+- **My Saved Recipes:** Access all your saved recipes on your profile page, making it simple to find them again.
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+### 5. Shopping List Generator
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+- **Smart Aggregation:** Select one or more recipes from your saved list to generate a consolidated shopping list.
+- **Ingredient Consolidation:** i_Cooked automatically combines identical ingredients from different recipes, summing up quantities.
+- **Easy Management:**
+  - View the generated list with clear item names, quantities, and units.
+  - See which recipes each ingredient belongs to.
+  - Options to **Copy** the list to your clipboard, **Print** it for offline use, or **Clear** the list.
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+![Shopping List Page](docs/images/shopping-list-page.png)
+_Fig 4: Shopping List Generator with a generated list._
 
-3. Use `cd` to change into the app's directory
+### 6. Interactive Recipe Viewing
 
-   ```bash
-   cd with-supabase-app
-   ```
+- **Detailed Modals:** Click on any recipe card to open a detailed view in a modal, showing:
+  - Recipe image
+  - Title
+  - Summary
+  - Allergen warnings (if applicable based on your profile settings)
+  - Full ingredient list
+  - Step-by-step cooking instructions
+- **Seamless Browsing:** View recipe details without navigating away from your current page (e.g., search results, home page).
 
-4. Rename `.env.example` to `.env.local` and update the following:
+## Technologies Used (Example)
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+- **Frontend:** Next.js (React), TypeScript, Tailwind CSS
+- **Backend/Database:** Supabase (for user authentication and storing saved recipes/preferences)
+- **API:** Spoonacular API (for recipe data)
+- **UI Components:** Shadcn/ui (or similar component library)
+- **State Management:** React Context API
+- **Styling:** Tailwind CSS
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+## Getting Started
 
-5. You can now run the Next.js local development server:
+(This section would typically include instructions on how to set up and run the project locally, including environment variable setup for API keys.)
 
-   ```bash
-   npm run dev
-   ```
+---
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
-
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+Thank you for checking out i_Cooked! We hope it makes your cooking journey more enjoyable and organized.

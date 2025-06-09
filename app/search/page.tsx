@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // SearchBar component
-const SearchBar = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
+const SearchBar = ({ value, onChange, onKeyDown }: { value: string; onChange: (value: string) => void; onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void; }) => (
   <input
     type="text"
     placeholder="Search recipes, ingredients..."
@@ -24,6 +24,7 @@ const SearchBar = ({ value, onChange }: { value: string; onChange: (value: strin
     aria-label="Search recipes"
     value={value}
     onChange={(e) => onChange(e.target.value)}
+    onKeyDown={onKeyDown}
   />
 );
 
@@ -57,6 +58,12 @@ export default function SearchPage() {
     router.push(`/search/results?${params.toString()}`);
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="container mx-auto">
       <header className="mb-6 text-center sm:mb-8">
@@ -67,7 +74,7 @@ export default function SearchPage() {
       {/* Search Bar and Filters Section */}
       <section className="mb-8 p-4 bg-muted rounded-xl shadow-lg sm:p-6 sm:mb-10">
         <div className="mb-4 sm:mb-6">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} onKeyDown={handleKeyDown} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"> {/* Adjusted grid to 4 cols for filters */}
           {/* Diet Filter */}
