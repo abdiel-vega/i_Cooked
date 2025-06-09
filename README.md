@@ -2,7 +2,7 @@
 
 Welcome to **i_Cooked**, a web application designed to help you discover, save, and organize your favorite recipes, manage dietary preferences, and simplify your grocery shopping!
 
-![Home Page](docs/images/home-page.png)
+![Home Page](docs/home-page.png)
 _Fig 1: i_Cooked Home Page - "Prepare Your Next Meal" section._
 
 ## Overview
@@ -27,7 +27,7 @@ i_Cooked is a feature-rich platform for food enthusiasts. Whether you're looking
   - Meal type (e.g., breakfast, lunch, dinner, dessert)
 - **Clear Results Display:** View search results in an easy-to-navigate grid, complete with essential recipe information.
 
-![Search Page](docs/images/search-page.png)
+![Search Page](docs/search-page.png)
 _Fig 2: Discover Recipes page with search and filter options._
 
 ### 3. User Accounts & Personalization
@@ -38,7 +38,7 @@ _Fig 2: Discover Recipes page with search and filter options._
   - Select and save common allergies (e.g., Dairy, Gluten, Peanuts, Shellfish).
   - Recipes that potentially contain your specified allergens will display clear warnings.
 
-![Profile Page](docs/images/profile-page.png)
+![Profile Page](docs/profile-page.png)
 _Fig 3: User Profile page showing allergy preferences._
 
 ### 4. Save & Organize Recipes
@@ -55,7 +55,7 @@ _Fig 3: User Profile page showing allergy preferences._
   - See which recipes each ingredient belongs to.
   - Options to **Copy** the list to your clipboard, **Print** it for offline use, or **Clear** the list.
 
-![Shopping List Page](docs/images/shopping-list-page.png)
+![Shopping List Page](docs/shopping-list-page.png)
 _Fig 4: Shopping List Generator with a generated list._
 
 ### 6. Interactive Recipe Viewing
@@ -74,14 +74,6 @@ _Fig 4: Shopping List Generator with a generated list._
 - **Frontend:** Next.js (React), TypeScript, Tailwind CSS
 - **Backend/Database:** Supabase (for user authentication and storing saved recipes/preferences)
 - **API:** Spoonacular API (for recipe data)
-- **UI Components:** Shadcn/ui (or similar component library)
+- **UI Components:** Shadcn/ui
 - **State Management:** React Context API
 - **Styling:** Tailwind CSS
-
-## Getting Started
-
-(This section would typically include instructions on how to set up and run the project locally, including environment variable setup for API keys.)
-
----
-
-Thank you for checking out i_Cooked! We hope it makes your cooking journey more enjoyable and organized.
