@@ -2,22 +2,19 @@
 
 import { Recipe } from "@/lib/spoonacular";
 import { createClient } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
 
 export interface SavedRecipeEntry {
-  id: number; // Primary key of the saved_recipes table
+  id: number; // primary key of the saved_recipes table
   user_id: string;
   recipe_id: number;
-  recipe_data: Recipe; // Store the whole recipe object
+  recipe_data: Recipe; // store the whole recipe object
   created_at: string;
 }
 
 const supabase = createClient();
 
-/**
- * Saves a recipe for a user.
- * Assumes a 'saved_recipes' table with columns: user_id (uuid), recipe_id (int4), recipe_data (jsonb).
- */
+// saves a recipe for a user.
+// assumes a 'saved_recipes' table with columns: user_id (uuid), recipe_id (int4), recipe_data (jsonb).
 export async function saveRecipeToSupabase(
   userId: string,
   recipe: Recipe
@@ -32,17 +29,17 @@ export async function saveRecipeToSupabase(
       {
         user_id: userId,
         recipe_id: recipe.id,
-        recipe_data: recipe, // Store the full recipe object
+        recipe_data: recipe, // store the full recipe object
       },
     ])
     .select()
-    .single(); // Assuming you want the inserted row back and recipe_id + user_id is unique
+    .single();
 
   if (error) {
     console.error("Error saving recipe to Supabase:", error);
-    // Check for unique constraint violation (recipe already saved)
+    // check for unique constraint violation (recipe already saved)
     if (error.code === "23505") {
-      // PostgreSQL unique violation error code
+      // postgresql unique violation error code
       throw new Error("Recipe already saved.");
     }
     throw new Error(error.message || "Could not save recipe.");
@@ -50,9 +47,7 @@ export async function saveRecipeToSupabase(
   return data as SavedRecipeEntry;
 }
 
-/**
- * Unsaves (deletes) a recipe for a user by recipe_id.
- */
+// unsaves (deletes) a recipe for a user by recipe_id.
 export async function unsaveRecipeFromSupabase(
   userId: string,
   recipeId: number
@@ -73,9 +68,7 @@ export async function unsaveRecipeFromSupabase(
   return { success: true };
 }
 
-/**
- * Fetches all saved recipes for a user.
- */
+// fetches all saved recipes for a user.
 export async function getSavedRecipesFromSupabase(
   userId: string
 ): Promise<Recipe[]> {
@@ -85,7 +78,7 @@ export async function getSavedRecipesFromSupabase(
 
   const { data, error } = await supabase
     .from("saved_recipes")
-    .select("recipe_data") // Select only the recipe_data column
+    .select("recipe_data") // select only the recipe_data column
     .eq("user_id", userId)
     .order("saved_at", { ascending: false });
 
@@ -94,14 +87,12 @@ export async function getSavedRecipesFromSupabase(
     throw new Error(error.message || "Could not fetch saved recipes.");
   }
 
-  // The data will be an array of objects like [{ recipe_data: {...} }, ...]
-  // We need to map it to return an array of Recipe objects.
+  // data is an array of objects like [{ recipe_data: {...} }, ...]
+  // map to return an array of recipe objects.
   return data ? data.map((item) => item.recipe_data as Recipe) : [];
 }
 
-/**
- * Checks if a specific recipe is saved by the user.
- */
+// checks if a specific recipe is saved by the user.
 export async function checkIsRecipeSaved(
   userId: string,
   recipeId: number
@@ -115,12 +106,12 @@ export async function checkIsRecipeSaved(
     .from("saved_recipes")
     .select("recipe_id")
     .match({ user_id: userId, recipe_id: recipeId })
-    .maybeSingle(); // Returns one row or null, doesn't error if not found
+    .maybeSingle(); // returns one row or null, doesn't error if not found
 
   if (error) {
     console.error("Error checking if recipe is saved:", error);
-    return false; // Or throw error if you want to handle it differently
+    return false; // or throw error if you want to handle it differently
   }
 
-  return !!data; // True if data is not null (recipe is found/saved)
+  return !!data; // true if data is not null (recipe is found/saved)
 }

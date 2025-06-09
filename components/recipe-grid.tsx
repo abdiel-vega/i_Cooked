@@ -1,8 +1,8 @@
 import { Recipe } from '@/lib/spoonacular';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
-import { Allergen } from '@/lib/allergens'; // Import Allergen type
-import { AlertTriangle, ImageIcon, LeafyGreen, MilkOff, Vegan, Wheat, WheatOff } from 'lucide-react'; // For warning icon
+import { Allergen } from '@/lib/allergens';
+import { AlertTriangle, ImageIcon, LeafyGreen, MilkOff, Vegan, WheatOff } from 'lucide-react';
 
 interface RecipeGridProps {
   recipes: Recipe[];
@@ -14,12 +14,12 @@ interface RecipeGridProps {
   isAuthLoading: boolean;
   gridOverallLoading: boolean;
   animationType: 'initial' | 'subsequent';
-  userAllergies?: Allergen[]; // Added userAllergies prop
+  userAllergies?: Allergen[];
 }
 
 const ANIMATION_BATCH_SIZE = 12;
 
-// Helper function to check for allergens in a recipe
+// helper function to check for allergens in a recipe
 function getRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
   if (!userAllergies || userAllergies.length === 0) {
     return [];
@@ -35,13 +35,13 @@ function getRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | u
         if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
         break;
       case "Wheat":
-        // If glutenFree is false, it might contain wheat. This is an assumption.
+        // if glutenfree is false, it might contain wheat. this is an assumption.
         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
-      // Add other cases based on available recipe properties
+      // add other cases based on available recipe properties
     }
   });
-  return [...new Set(triggeredAllergens)]; // Return names of allergens
+  return [...new Set(triggeredAllergens)]; // return names of allergens
 }
 
 
@@ -55,10 +55,10 @@ export function RecipeGrid({
   isAuthLoading,
   gridOverallLoading,
   animationType,
-  userAllergies = [], // Default to empty array
+  userAllergies = [], // default to empty array
 }: RecipeGridProps) {
   if (recipes.length === 0 && !gridOverallLoading) {
-    return null; // Parent component should handle "no recipes" message
+    return null; // parent component handles "no recipes" message
   }
 
   return (
@@ -72,10 +72,10 @@ export function RecipeGrid({
         let calculatedAnimationDelay = '0s';
         if (!gridOverallLoading && recipes.length > 0) {
           if (animationType === 'initial') {
-            // Slower stagger for the initial set of items
+            // slower stagger for initial items
             calculatedAnimationDelay = `${index * 0.1}s`;
           } else {
-            // Faster, repeating stagger for subsequent items (e.g., infinite scroll, search results)
+            // faster, repeating stagger for subsequent items
             calculatedAnimationDelay = `${(index % ANIMATION_BATCH_SIZE) * 0.05}s`;
           }
         }

@@ -7,37 +7,36 @@ import SavedRecipesList from '@/components/saved-recipes-list';
 import { useEffect, useState, useMemo } from 'react';
 import { COMMON_ALLERGENS, Allergen } from '@/lib/allergens';
 import { getUserAllergies, updateUserAllergies } from '@/lib/supabase/profiles';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
-// Import getRecipeDetails
 import { Recipe as SpoonacularRecipe, getRecipeDetails } from '@/lib/spoonacular'; 
-import { ClipboardCopy, Printer, RefreshCw, Trash2 } from 'lucide-react'; // Icons
+import { ClipboardCopy, Printer, RefreshCw, Trash2 } from 'lucide-react';
 
 export interface ShoppingListItem {
-  id: string; // Unique key: nameClean_unit
-  displayName: string; // User-friendly name
-  nameClean: string; // The version of the name used for aggregation
-  totalAmount: number; // Sum of numeric amounts. If all indeterminate, this will be 0.
-  unit: string; // The unit for display. Empty if not specified.
+  id: string; // unique key: nameclean_unit
+  displayName: string; // user name
+  nameClean: string; // the version of the name used for aggregation
+  totalAmount: number; // sum of numeric amounts. if all indeterminate, this will be 0.
+  unit: string; // the unit for display. empty if not specified.
   recipeSources: Array<{ recipeTitle: string; originalEntry: string }>;
-  hasIndeterminateAmount: boolean; // True if any source for this item had an indeterminate amount
+  hasIndeterminateAmount: boolean; // true if any source for this item had an indeterminate amount
 }
 
-// Helper function to capitalize each word
+// helper function to capitalize each word
 function capitalizeEachWord(str: string): string {
   if (!str) return "";
   return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
 }
 
-// Helper function to render shopping list item amount and unit
+// helper function to render shopping list item amount and unit
 function renderShoppingListItemAmountUnit(item: ShoppingListItem): string {
   const { totalAmount, unit, hasIndeterminateAmount } = item;
   let displayString = "";
 
   if (totalAmount > 0) {
-    // Use toLocaleString for potentially better formatting of numbers, e.g., 0.5 vs .5
+    // use tolocalestring for potentially better formatting of numbers, e.g., 0.5 vs .5
     displayString = totalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     if (unit) {
       displayString += ` ${unit}`;
@@ -46,10 +45,10 @@ function renderShoppingListItemAmountUnit(item: ShoppingListItem): string {
 
   if (hasIndeterminateAmount) {
     if (displayString) {
-      // If there's a numeric part, append something to indicate more or unspecified amounts
+      // if there's a numeric part, append something to indicate more or unspecified amounts
       displayString += " (+ some)"; 
     } else {
-      // If no numeric part, it's entirely indeterminate
+      // if no numeric part, it's entirely indeterminate
       displayString = "As needed / To taste"; 
     }
   }
@@ -63,7 +62,7 @@ export default function ProfilePage() {
   const [isSavingAllergies, setIsSavingAllergies] = useState(false);
   const [initialAllergiesLoaded, setInitialAllergiesLoaded] = useState(false);
 
-  // State for shopping list
+  // state for shopping list
   const [selectedRecipesForList, setSelectedRecipesForList] = useState<Map<number, SpoonacularRecipe>>(new Map());
   const [generatedShoppingList, setGeneratedShoppingList] = useState<ShoppingListItem[] | null>(null);
   const [isGeneratingList, setIsGeneratingList] = useState(false);
@@ -76,7 +75,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadUserAllergies() {
-      if (user && !initialAllergiesLoaded) { // Only load once initially or if user changes
+      if (user && !initialAllergiesLoaded) { // only load once initially or if user changes
         try {
           const allergies = await getUserAllergies(user.id);
           setSelectedAllergies(new Set(allergies));
@@ -91,9 +90,9 @@ export default function ProfilePage() {
     if (!authLoading && user) {
         loadUserAllergies();
     } else if (!user) {
-        // Clear allergies if user logs out
+        // clear allergies if user logs out
         setSelectedAllergies(new Set());
-        setInitialAllergiesLoaded(false); // Allow reloading if another user logs in
+        setInitialAllergiesLoaded(false); // allow reloading if another user logs in
     }
   }, [user, authLoading, initialAllergiesLoaded]);
 
@@ -106,7 +105,7 @@ export default function ProfilePage() {
     } else {
       newAllergiesSet.delete(allergen);
     }
-    // Optimistic UI update
+    // optimistic ui update
     setSelectedAllergies(newAllergiesSet); 
 
     setIsSavingAllergies(true);
@@ -116,7 +115,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Failed to update allergies:", error);
       toast.error("Failed to save allergy preferences. Please try again.");
-      // Revert optimistic update by refetching
+      // revert optimistic update by refetching
       try {
         const currentAllergies = await getUserAllergies(user.id);
         setSelectedAllergies(new Set(currentAllergies));
@@ -130,13 +129,13 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      await logout(); // This should handle Supabase signout and update context
-      // The AuthProvider's onAuthStateChange should redirect or update UI, 
+      await logout(); // this should handle supabase signout and update context
+      // the authprovider's onauthstatechange should redirect or update ui,
       // but an explicit push can be a fallback.
       router.push('/auth/login'); 
     } catch (error) {
       console.error('Logout failed:', error);
-      // Optionally, show an error to the user
+      // optionally, show an error to the user
     }
   };
 
@@ -146,12 +145,12 @@ export default function ProfilePage() {
       if (newMap.has(recipe.id)) {
         newMap.delete(recipe.id);
       } else {
-        // We will fetch full details in generateShoppingList if needed
+        // full details will be fetched in generateshoppinglist if needed
         newMap.set(recipe.id, recipe);
       }
       return newMap;
     });
-    // If a list was already generated, clear it as the selection has changed
+    // if a list was already generated, clear it as the selection has changed
     if (generatedShoppingList) {
         setGeneratedShoppingList(null);
     }
@@ -181,39 +180,39 @@ export default function ProfilePage() {
           toast.dismiss(loadingToastId);
           if (fullDetails && fullDetails.extendedIngredients && fullDetails.extendedIngredients.length > 0) {
             recipesToProcess.push(fullDetails);
-            updatedSelectedRecipes.set(recipe.id, fullDetails); // Update the map with full details
+            updatedSelectedRecipes.set(recipe.id, fullDetails); // update the map with full details
             toast.success(`Details fetched for ${recipe.title}.`);
           } else {
-            recipesToProcess.push(recipe); // Process with what we have (likely no ingredients)
+            recipesToProcess.push(recipe); // process with what we have (likely no ingredients)
             toast.info(`Could not fetch ingredients for ${recipe.title}. It may not contribute to the list.`);
           }
         } catch (fetchErr: any) {
-          toast.dismiss(); // Dismiss any loading toast
+          toast.dismiss(); 
           console.error(`Error fetching details for ${recipe.title}:`, fetchErr);
           toast.error(`Error fetching details for ${recipe.title}. It may not contribute to the list.`);
-          recipesToProcess.push(recipe); // Process with original, likely leading to no ingredients from this one
+          recipesToProcess.push(recipe); // process with original, likely leading to no ingredients from this one
         }
       } else {
         recipesToProcess.push(recipe);
       }
     }
-    setSelectedRecipesForList(updatedSelectedRecipes); // Persist fetched details in state
+    setSelectedRecipesForList(updatedSelectedRecipes); // persist fetched details in state
 
     const aggregatedIngredients: Map<string, ShoppingListItem> = new Map();
 
     recipesToProcess.forEach(recipe => {
       if (recipe.extendedIngredients && recipe.extendedIngredients.length > 0) {
         recipe.extendedIngredients.forEach(ingredient => {
-          // Use fallbacks for name and unit if they are missing
+          // use fallbacks for name and unit if they are missing
           const nameForAggregation = (ingredient.nameClean || ingredient.name || ingredient.original || "unknown_ingredient").toLowerCase();
-          const unitForAggregation = (ingredient.unit || "").toLowerCase(); // Standardize to lowercase for key
+          const unitForAggregation = (ingredient.unit || "").toLowerCase(); // standardize to lowercase for key
           
           const key = `${nameForAggregation}_${unitForAggregation}`;
           
-          // Prioritize originalName, then name, then nameClean for the display name
+          // prioritize originalname, then name, then nameclean for the display name
           const baseDisplayName = ingredient.originalName || ingredient.name || ingredient.nameClean || "Unknown Ingredient";
           const displayName = capitalizeEachWord(baseDisplayName);
-          const displayUnit = ingredient.unit || ""; // Unit for display, could be empty
+          const displayUnit = ingredient.unit || ""; // unit for display, could be empty
 
           if (aggregatedIngredients.has(key)) {
             const existing = aggregatedIngredients.get(key)!;
@@ -235,9 +234,7 @@ export default function ProfilePage() {
             });
           }
         });
-      } else if (operationSuccess) { // Only show this warning if we haven't already for this recipe
-        // This case might be hit if initial fetch failed and we proceeded or if a recipe truly has no ingredients
-        // console.warn(`Recipe "${recipe.title}" has no extended ingredients to process for shopping list.`);
+      } else if (operationSuccess) { // only show this warning if we haven't already for this recipe
       }
     });
 
@@ -249,10 +246,9 @@ export default function ProfilePage() {
     setIsGeneratingList(false);
 
     if (sortedList.length === 0) {
-      if (selectedRecipesForList.size > 0) { // Recipes were selected, but no ingredients found
+      if (selectedRecipesForList.size > 0) { // recipes were selected, but no ingredients found
         toast.info("No ingredients found in the selected recipes, or ingredient data was missing/could not be fetched.");
       }
-      // If selectedRecipesForList.size was 0, the initial check would have caught it.
     } else {
       toast.success("Shopping list generated!");
     }
@@ -287,12 +283,12 @@ export default function ProfilePage() {
   
   const handleClearShoppingList = () => {
     setGeneratedShoppingList(null);
-    setSelectedRecipesForList(new Map()); // Also clear selections
+    setSelectedRecipesForList(new Map()); // also clear selections
     toast.info("Shopping list cleared.");
   };
 
 
-  // Display a loading message while checking auth state or if user is null (before redirect)
+  // display loading message while checking auth state or if user is null (before redirect)
   if (authLoading || (user && !initialAllergiesLoaded)) {
     return (
       <div className="flex justify-center items-center min-h-screen px-4">
@@ -303,7 +299,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    // This case should ideally be handled by the redirect, but as a fallback:
+    // this case should ideally be handled by the redirect, but as a fallback:
     return (
       <div className="flex justify-center items-center min-h-screen px-4">
         <div className="text-center">
@@ -323,18 +319,18 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4">
       <style jsx global>{`
         @media print {
-          /* Reset and hide everything first */
+          /* reset and hide everything first for printing */
           body * {
             visibility: hidden !important;
           }
           
-          /* Show only the shopping list and its contents */
+          /* show only the shopping list and its contents for printing */
           .printable-shopping-list,
           .printable-shopping-list * {
             visibility: visible !important;
           }
           
-          /* Basic page setup */
+          /* basic page setup for printing */
           @page {
             margin: 20mm;
             size: letter;
@@ -346,7 +342,7 @@ export default function ProfilePage() {
             background: white !important;
           }
           
-          /* Main container styling */
+          /* main container styling for printing */
           .printable-shopping-list {
             position: absolute !important;
             top: 0 !important;
@@ -361,7 +357,7 @@ export default function ProfilePage() {
             color: #000 !important;
           }
           
-          /* Title styling */
+          /* title styling for printing */
           .printable-shopping-list .print-title {
             font-size: 24pt !important;
             font-weight: bold !important;
@@ -372,14 +368,14 @@ export default function ProfilePage() {
             page-break-after: avoid !important;
           }
           
-          /* List container */
+          /* list container for printing */
           .printable-shopping-list ul {
             list-style: none !important;
             margin: 0 !important;
             padding: 0 !important;
           }
           
-          /* Individual item styling */
+          /* individual item styling for printing */
           .printable-shopping-list li {
             display: flex !important;
             justify-content: space-between !important;
@@ -396,14 +392,14 @@ export default function ProfilePage() {
             border-bottom: none !important;
           }
           
-          /* Item details container */
+          /* item details container for printing */
           .printable-shopping-list .item-details {
             flex: 1 1 auto !important;
             padding-right: 10mm !important;
             max-width: 70% !important;
           }
           
-          /* Item name styling */
+          /* item name styling for printing */
           .printable-shopping-list .item-name {
             font-weight: bold !important;
             font-size: 14pt !important;
@@ -412,7 +408,7 @@ export default function ProfilePage() {
             display: block !important;
           }
           
-          /* Recipe source styling */
+          /* recipe source styling for printing */
           .printable-shopping-list .item-source {
             font-size: 10pt !important;
             color: #555 !important;
@@ -421,7 +417,7 @@ export default function ProfilePage() {
             line-height: 1.4 !important;
           }
           
-          /* Quantity styling */
+          /* quantity styling for printing */
           .printable-shopping-list .item-quantity {
             font-weight: semibold !important;
             font-size: 12pt !important;
@@ -433,7 +429,7 @@ export default function ProfilePage() {
             color: #000 !important;
           }
           
-          /* Hide non-printable elements */
+          /* hide non-printable elements */
           .no-print,
           button,
           nav,
@@ -445,7 +441,7 @@ export default function ProfilePage() {
             display: none !important;
           }
           
-          /* page numbers */
+          /* page numbers for printing */
           @page {
             @bottom-right {
               content: counter(page) " / " counter(pages);
@@ -495,7 +491,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Shopping List Generator Section */}
+      {/* shopping list generator section */}
       <Card className="max-w-4xl mx-auto mb-10"> 
         <CardHeader className="no-print"> 
           <CardTitle className="text-xl text-foreground sm:text-2xl">Shopping List Generator</CardTitle>
@@ -549,16 +545,15 @@ export default function ProfilePage() {
                 {generatedShoppingList.map(item => (
                   <li 
                     key={item.id} 
-                    // Tailwind classes for on-screen display:
                     className="p-2.5 border border-background rounded-md bg-background text-sm text-foreground flex justify-between items-start transition duration-300 ease-in-out hover:border-accent sm:p-3"
                   >
-                    <div className="item-details flex-grow pr-2"> {/* Adjusted padding for screen */}
+                    <div className="item-details flex-grow pr-2"> {/* adjusted padding for screen */}
                       <span className="font-medium item-name block mb-0.5 text-sm sm:text-base">{item.displayName}</span>
-                      <div className="text-xs text-muted-foreground item-source"> {/* Screen: text-xs, gray; Print: styled by .item-source */}
+                      <div className="text-xs text-muted-foreground item-source"> {/* screen: text-xs, gray; print: styled by .item-source */}
                         From: {item.recipeSources.map(src => src.recipeTitle).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
                       </div>
                     </div>
-                    <span className="text-foreground text-right item-quantity whitespace-nowrap flex-shrink-0 pl-1 text-sm sm:text-base sm:pl-2"> {/* Added pl for screen if quantity is long */}
+                    <span className="text-foreground text-right item-quantity whitespace-nowrap flex-shrink-0 pl-1 text-sm sm:text-base sm:pl-2"> {/* added pl for screen if quantity is long */}
                       {renderShoppingListItemAmountUnit(item)}
                     </span>
                   </li>

@@ -21,7 +21,7 @@ interface RecipeDetailModalProps {
   user: User | null | undefined;
   isAuthLoading: boolean;
   savedRecipeIds: Set<number>;
-  isSaving: Record<number, boolean>; // For the save button state specific to the recipe ID
+  isSaving: Record<number, boolean>; // save button state specific to the recipe id
   onToggleSave: (recipe: Recipe) => void;
   currentUserAllergies: Allergen[];
   getRecipeAllergenWarnings: (recipe: Recipe, userAllergies: Allergen[] | undefined) => string[];
@@ -52,7 +52,7 @@ export function RecipeDetailModal({
         {modalLoading && (
           <div className="flex justify-center items-center h-96 p-4 sm:p-6">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent">
-              <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle>
+              <DialogTitle className="sr-only">Loading Recipe Details</DialogTitle> {/* accessible title for loading state */}
             </div>
             <p className="ml-3 text-foreground">Loading recipe details...</p>
           </div>

@@ -12,15 +12,14 @@ import {
 } from '@/lib/supabase/recipes'; 
 import { toast } from "sonner";
 import Link from 'next/link';
-// import { RecipeGrid } from '@/components/recipe-grid'; // Not used here, page has its own grid
-import { RecipeGrid } from '@/components/recipe-grid'; // Import RecipeGrid
+import { RecipeGrid } from '@/components/recipe-grid';
 import { Allergen } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
+import { RecipeDetailModal } from '@/components/recipe-detail-modal';
 
 const RECIPES_PER_PAGE = 12;
 
-// Helper function to check for allergens in a recipe (similar to RecipeGrid) - keep for modal if not using RecipeGrid's one
+// helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsResults(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
   if (!userAllergies || userAllergies.length === 0 || !recipe) {
     return [];
@@ -35,13 +34,11 @@ function getRecipeAllergenWarningsResults(recipe: Recipe, userAllergies: Allerge
         if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
         break;
       case "Wheat":
-        // If glutenFree is false, it might contain wheat. This is an assumption.
         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
-      // Add other cases based on available recipe properties
     }
   });
-  return [...new Set(triggeredAllergens)]; // Return names of allergens
+  return [...new Set(triggeredAllergens)]; // return names of allergens
 }
 
 
@@ -68,10 +65,9 @@ function SearchResultsPageContent() {
   const query = searchParams.get('query') || undefined;
   const cuisine = searchParams.get('cuisine') || undefined;
   const diet = searchParams.get('diet') || undefined;
-  const type = searchParams.get('type') || undefined; // Get meal type
+  const type = searchParams.get('type') || undefined;
   const maxReadyTimeString = searchParams.get('maxReadyTime');
   const maxReadyTime = maxReadyTimeString ? parseInt(maxReadyTimeString, 10) : undefined;
-  // const [appliedIntolerances, setAppliedIntolerances] = useState<string[]>([]); // No longer needed
 
   const updateSavedRecipeStatus = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
@@ -90,7 +86,7 @@ function SearchResultsPageContent() {
     setSavedRecipeIds(newSavedIds);
   }, [user, savedRecipeIds]);
 
-  // Effect to fetch user allergies
+  // effect to fetch user allergies
   useEffect(() => {
     async function loadUserAllergies() {
       if (user && !isAuthLoading) {
@@ -104,7 +100,7 @@ function SearchResultsPageContent() {
         setCurrentUserAllergies([]);
       }
     }
-    // Fetch allergies when auth state is resolved
+    // fetch allergies when auth state is resolved
     if(!isAuthLoading) {
         loadUserAllergies();
     }
@@ -113,7 +109,7 @@ function SearchResultsPageContent() {
   const fetchRecipes = useCallback(async (offset: number, initialFetch: boolean = false) => {
     if (initialFetch) {
       setLoading(true);
-      setRecipes([]); // Clear previous results for a new search
+      setRecipes([]); // clear previous results for a new search
       setCurrentOffset(0);
       setTotalResults(0);
     } else {
@@ -121,15 +117,12 @@ function SearchResultsPageContent() {
     }
     setError(null);
 
-    // const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy)); // Removed for displaying warnings instead of filtering
-
     const searchApiParams: SearchParams = {
       query,
       cuisine,
       diet,
-      type, // Pass meal type
+      type, 
       maxReadyTime,
-      // intolerances: intoleranceParams, // Removed: No longer filtering by intolerances
       number: RECIPES_PER_PAGE,
       offset,
     };
@@ -149,16 +142,15 @@ function SearchResultsPageContent() {
       setIsFetchingMore(false);
       if (initialFetch) setInitialLoadComplete(true);
     }
-  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]); // Added type
+  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]); // added type dependency
 
   useEffect(() => {
-    // Trigger initial fetch when search params change OR when allergies are loaded (if user is logged in and auth is resolved)
+    // trigger initial fetch on search param change or when allergies load (if user logged in)
     setInitialLoadComplete(false);
-    if (!isAuthLoading) { // Ensure auth state is resolved before fetching
+    if (!isAuthLoading) { // ensure auth state is resolved before fetching
         fetchRecipes(0, true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, cuisine, diet, type, maxReadyTime, currentUserAllergies, isAuthLoading]); // Added type
+  }, [query, cuisine, diet, type, maxReadyTime, currentUserAllergies, isAuthLoading]); // added type dependency
 
 
    useEffect(() => {
@@ -262,20 +254,12 @@ function SearchResultsPageContent() {
     );
   }
   
-  // const hasActiveFilters = query || cuisine || diet || maxReadyTime || appliedIntolerances.length > 0;
-  // const searchDescription = [
-  //   query ? `results for "${query}"` : "recipes",
-  //   cuisine ? `in ${cuisine} cuisine` : "",
-  //   diet ? `fitting ${diet} diet` : "",
-  //   maxReadyTime ? `ready in ${maxReadyTime} mins or less` : "",
-  //   appliedIntolerances.length > 0 ? `excluding ${appliedIntolerances.join(', ')}` : ""
-  // ].filter(Boolean).join(", ");
   const hasActiveFilters = query || cuisine || diet || type || maxReadyTime;
   const searchDescription = [
     query ? `results for "${query}"` : "recipes",
     cuisine ? `in ${cuisine} cuisine` : "",
     diet ? `fitting ${diet} diet` : "",
-    type ? `of type ${type}` : "", // Add meal type to description
+    type ? `of type ${type}` : "",
     maxReadyTime ? `ready in ${maxReadyTime} mins or less` : "",
   ].filter(Boolean).join(", ");
 
@@ -317,7 +301,7 @@ function SearchResultsPageContent() {
         user={user}
         isAuthLoading={isAuthLoading}
         gridOverallLoading={loading && !initialLoadComplete}
-        animationType={'subsequent'} // Search results are typically a new set
+        animationType={'subsequent'} // search results are typically a new set, so use 'subsequent' animation
         userAllergies={currentUserAllergies}
       />
 
@@ -332,7 +316,6 @@ function SearchResultsPageContent() {
         <p className="text-center text-muted-foreground py-8">You've reached the end of the results.</p>
       )}
 
-      {/* Recipe Details Modal (similar to HomePage) */}
       <RecipeDetailModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -345,13 +328,13 @@ function SearchResultsPageContent() {
         isSaving={isSaving}
         onToggleSave={handleToggleSaveRecipe}
         currentUserAllergies={currentUserAllergies}
-        getRecipeAllergenWarnings={getRecipeAllergenWarningsResults} // Pass existing helper
+        getRecipeAllergenWarnings={getRecipeAllergenWarningsResults} // pass allergen warning helper
       />
     </div>
   );
 }
 
-// Wrap with Suspense because useSearchParams() needs it
+// wrap with suspense because usesearchparams() needs it
 export default function SearchResultsPage() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div><p className="ml-3 text-foreground">Loading search page...</p></div>}>

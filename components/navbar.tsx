@@ -7,17 +7,15 @@ import {LogoutButton } from "@/components/logout-button";
 import { Home, Search, User, LogIn, UserPlus, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from 'next/navigation'; 
-import { useAuth } from '@/app/contexts/auth-context'; // Import useAuth
+import { useAuth } from '@/app/contexts/auth-context';
 
 export default function Navbar() {
-  const { user, isLoading } = useAuth(); // Use AuthContext
+  const { user, isLoading } = useAuth(); // use authcontext
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // No longer need local user fetching useEffect
-
   useEffect(() => {
-    setIsMobileMenuOpen(false); 
+    setIsMobileMenuOpen(false); // close mobile menu on route change
   }, [pathname]);
 
   const toggleMobileMenu = () => {
@@ -49,7 +47,7 @@ export default function Navbar() {
               <span className="ml-1 sm:ml-2">i_Cooked</span>
             </Link>
             
-            {/* Desktop Navigation */}
+            {/* desktop navigation */}
             <div className="hidden md:flex items-center gap-4 lg:gap-6">
               <NavLink href="/">
                 <Home size={20} />
@@ -82,10 +80,10 @@ export default function Navbar() {
                     </Link>
                   </Button>
                 </>
-              ) : null /* Show nothing while loading to prevent flash of incorrect state */}
+              ) : null /* show nothing while loading to prevent flash of incorrect state */}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* mobile menu button */}
             <div className="md:hidden">
               <Button onClick={toggleMobileMenu} variant="ghost" size="icon" aria-label="Toggle menu">
                 {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -94,7 +92,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 mx-3 mt-1 bg-background/95 backdrop-blur-sm border border-muted-foreground/20 rounded-lg shadow-xl p-4 space-y-2">
             <MobileNavLink href="/" onClick={toggleMobileMenu}>
@@ -109,7 +107,7 @@ export default function Navbar() {
                   <User size={22} /> Profile
                 </MobileNavLink>
                 <div className="pt-2 w-full">
-                  {/* Ensure LogoutButton in mobile also closes menu if needed, or is styled appropriately */}
+                  {/* ensure logoutbutton in mobile also closes menu or is styled appropriately */}
                   <LogoutButton /> 
                 </div>
               </>
@@ -122,7 +120,7 @@ export default function Navbar() {
                   <UserPlus size={22} /> Sign up
                 </MobileNavLink>
               </>
-            ) : null /* Show nothing while loading */}
+            ) : null /* show nothing while loading */}
           </div>
         )}
       </nav>
@@ -130,5 +128,5 @@ export default function Navbar() {
   );
 }
 
-// Helper to combine class names
+// helper to combine class names
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');

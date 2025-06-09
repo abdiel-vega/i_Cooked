@@ -1,17 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getRandomRecipes, Recipe, getRecipeDetails, fetchPersonalizedRecipes } from '@/lib/spoonacular'
+import { getRandomRecipes, Recipe, getRecipeDetails } from '@/lib/spoonacular'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useAuth } from '@/app/contexts/auth-context'
 import { 
   saveRecipeToSupabase, 
@@ -21,15 +12,15 @@ import {
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
 import { RecipeGrid } from '@/components/recipe-grid';
-import { Allergen, getAllergenQueryValue } from '@/lib/allergens';
+import { Allergen } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
+import { RecipeDetailModal } from '@/components/recipe-detail-modal';
 import Link from 'next/link'
 
 const INITIAL_RECIPE_COUNT = 12;
 const MORE_RECIPE_COUNT = 8;
 
-// Helper function to analyze user preferences
+// helper function to analyze user preferences
 function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[], topDiets: string[], topDishTypes: string[] } {
   const cuisineCounts: Record<string, number> = {};
   const dietCounts: Record<string, number> = {};
@@ -59,7 +50,7 @@ function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[]
     .sort(([,a], [,b]) => b - a)
     .map(([dishType]) => dishType);
 
-  // Return top 2 cuisines, top 1 diet, and top 2 dish types, for example
+  // return top preferences, e.g., 2 cuisines, 1 diet, 2 dish types
   return {
     topCuisines: sortedCuisines.slice(0, 2),
     topDiets: sortedDiets.slice(0, 1),
@@ -67,7 +58,7 @@ function analyzeUserPreferences(savedRecipes: Recipe[]): { topCuisines: string[]
   };
 }
 
-// Define the allergen warning function for the modal, can be shared or specific
+// allergen warning function for the modal
 function getHomePageRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
   if (!userAllergies || userAllergies.length === 0 || !recipe) {
     return [];
@@ -93,7 +84,7 @@ function getHomePageRecipeAllergenWarnings(recipe: Recipe, userAllergies: Allerg
 export default function HomePage() {
   const { user, isLoading: isAuthLoading } = useAuth()
   const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState(true) // Page content loading
+  const [loading, setLoading] = useState(true) // page content loading state
   const [error, setError] = useState<string | null>(null)
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -107,55 +98,54 @@ export default function HomePage() {
 
   const [userSavedRecipesForAnalysis, setUserSavedRecipesForAnalysis] = useState<Recipe[]>([]);
   const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
-  // const [currentPersonalizedOffset, setCurrentPersonalizedOffset] = useState(0); // No longer needed for main grid
 
-  // State for personalized suggestions UI
+  // state for personalized suggestions ui
   const [personalizedSuggestions, setPersonalizedSuggestions] = useState<{ topCuisines: string[], topDiets: string[], topDishTypes: string[] } | null>(null);
 
-  // State to manage loading of initial dependencies
+  // state to manage loading of initial dependencies
   const [dataDepsStatus, setDataDepsStatus] = useState({
     authResolved: false,
-    savedRecipesFetched: false, // True if user exists and fetch is done, or if no user
-    allergiesFetched: false,   // True if user exists and fetch is done, or if no user
+    savedRecipesFetched: false, // true if user exists and fetch is done, or if no user
+    allergiesFetched: false,   // true if user exists and fetch is done, or if no user
   });
   const [initialFetchInitiated, setInitialFetchInitiated] = useState(false);
 
 
-  // Effect for auth resolution
+  // effect for auth resolution
   useEffect(() => {
     if (!isAuthLoading) {
       setDataDepsStatus(prev => ({ ...prev, authResolved: true }));
     }
   }, [isAuthLoading]);
 
-  // Effect to fetch all saved recipes for preference analysis when user logs in
+  // effect to fetch all saved recipes for preference analysis when user logs in
   useEffect(() => {
     async function fetchUserSavedRecipes() {
-      if (user) { // Only fetch if user exists
+      if (user) { // only fetch if user exists
         try {
           const saved = await getSavedRecipesFromSupabase(user.id);
           setUserSavedRecipesForAnalysis(saved);
         } catch (error) {
           console.error("Failed to fetch saved recipes for analysis:", error);
-          setUserSavedRecipesForAnalysis([]); // Reset on error
+          setUserSavedRecipesForAnalysis([]); // reset on error
         } finally {
           setDataDepsStatus(prev => ({ ...prev, savedRecipesFetched: true }));
         }
-      } else { // No user
+      } else { // no user
         setUserSavedRecipesForAnalysis([]);
         setDataDepsStatus(prev => ({ ...prev, savedRecipesFetched: true }));
       }
     }
 
-    if (!isAuthLoading) { // Ensure auth is resolved before attempting
+    if (!isAuthLoading) { // ensure auth is resolved before attempting
       fetchUserSavedRecipes();
     }
   }, [user, isAuthLoading]);
 
-  // Effect to fetch user allergies
+  // effect to fetch user allergies
   useEffect(() => {
     async function loadUserAllergies() {
-      if (user) { // Only fetch if user exists
+      if (user) { // only fetch if user exists
         try {
           const allergiesData = await getUserAllergies(user.id);
           setCurrentUserAllergies(allergiesData);
@@ -165,17 +155,17 @@ export default function HomePage() {
         } finally {
           setDataDepsStatus(prev => ({ ...prev, allergiesFetched: true }));
         }
-      } else { // No user
+      } else { // no user
         setCurrentUserAllergies([]);
         setDataDepsStatus(prev => ({ ...prev, allergiesFetched: true }));
       }
     }
-    if (!isAuthLoading) { // Ensure auth is resolved
+    if (!isAuthLoading) { // ensure auth is resolved
       loadUserAllergies();
     }
   }, [user, isAuthLoading]);
 
-  // Effect to generate personalized suggestions for the new UI section
+  // effect to generate personalized suggestions for the new ui section
   useEffect(() => {
     if (user && userSavedRecipesForAnalysis.length > 0) {
       const suggestions = analyzeUserPreferences(userSavedRecipesForAnalysis);
@@ -189,7 +179,7 @@ export default function HomePage() {
   const updateSavedRecipeStatusForDisplayedRecipes = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
     const newSavedIds = new Set<number>();
-    // Create a batch of promises to check saved status concurrently
+    // batch check saved status concurrently
     const checks = recipesToCheck.map(recipe => 
       recipe.id ? checkIsRecipeSaved(user.id, recipe.id).then(isSaved => ({ id: recipe.id, isSaved })) : Promise.resolve(null)
     );
@@ -207,7 +197,7 @@ export default function HomePage() {
       setLoading(true);
       setError(null);
       setInitialLoadAnimationComplete(false);
-      setRecipes([]); // Clear recipes for a fresh load
+      setRecipes([]); // clear recipes for a fresh load
     } else {
       if (isFetchingMore || !hasMore) return;
       setIsFetchingMore(true);
@@ -217,8 +207,8 @@ export default function HomePage() {
     let newRawRecipes: Recipe[] = [];
 
     try {
-      // Fetch random recipes without allergy filtering for the main grid
-      newRawRecipes = await getRandomRecipes(recipeCount + 5); // Fetch a bit more for de-duplication
+      // fetch random recipes for the main grid (no allergy filtering here, warnings are shown)
+      newRawRecipes = await getRandomRecipes(recipeCount + 5); // fetch a bit more for de-duplication
 
       const seenIdsForRaw = new Set<number>();
       const deDupedNewRawRecipes = newRawRecipes.filter(r => {
@@ -239,8 +229,8 @@ export default function HomePage() {
         setRecipes(prev => [...prev, ...uniqueNewRecipes]);
       }
       
-      // For random recipes, we assume there's always more unless an API call returns empty or fails.
-      // The slice(0, recipeCount) ensures we don't add too many if deDupedNewRawRecipes was large.
+      // assume more random recipes are available unless api returns empty/fails.
+      // ensure correct count after de-duplication.
       setHasMore(uniqueNewRecipes.length > 0 && uniqueNewRecipes.length === recipeCount); 
 
       if (uniqueNewRecipes.length > 0) {
@@ -260,37 +250,35 @@ export default function HomePage() {
       }
     }
   }, [
-    recipes, // Keep recipes to check currentDisplayedRecipeIds when loading more
+    recipes, // keep recipes to check currentdisplayedrecipeids when loading more
     hasMore, 
     isFetchingMore,
     updateSavedRecipeStatusForDisplayedRecipes
-    // Removed user, userSavedRecipesForAnalysis, currentUserAllergies, currentPersonalizedOffset from main grid fetch deps
   ]);
 
-  // Effect for initial data load, depends on all dependencies being ready
+  // effect for initial data load, depends on all dependencies being ready
   useEffect(() => {
     const { authResolved, savedRecipesFetched, allergiesFetched } = dataDepsStatus;
     if (authResolved && savedRecipesFetched && allergiesFetched && !initialFetchInitiated) {
       fetchData(true);
       setInitialFetchInitiated(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataDepsStatus, initialFetchInitiated, fetchData]);
 
 
-  // Effect for infinite scrolling
+  // effect for infinite scrolling
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isFetchingMore && hasMore && !loading) {
-        fetchData(false); // Load more
+        fetchData(false); // load more recipes
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [fetchData, isFetchingMore, hasMore, loading]); // fetchData is a dependency
+  }, [fetchData, isFetchingMore, hasMore, loading]); // fetchdata is a dependency
 
-  // Effect to update saved status for the selected recipe in the modal
+  // effect to update saved status for the selected recipe in the modal
   useEffect(() => {
     if (selectedRecipe && user && selectedRecipe.id && !isAuthLoading) {
       const recipeId = selectedRecipe.id;
@@ -358,10 +346,10 @@ export default function HomePage() {
       }
     } catch (error: any) {
       console.error("Failed to toggle save recipe:", error);
-      // Check if the error message is about unique constraint violation
+      // check for unique constraint violation (already saved)
       if (error.message && error.message.includes('already saved')) {
         toast.info('This recipe is already in your saved list.');
-        // Ensure UI consistency if Supabase says it's saved but client state thought otherwise
+        // ensure ui consistency if supabase says it's saved but client state thought otherwise
         setSavedRecipeIds(prev => new Set(prev).add(recipeId)); 
       } else {
         toast.error(error.message || 'Could not update saved status. Please try again.');
@@ -371,7 +359,7 @@ export default function HomePage() {
     }
   };
 
-  if (loading && recipes.length === 0 && !initialFetchInitiated) { // Show main loader only if initial fetch not even initiated and no recipes
+  if (loading && recipes.length === 0 && !initialFetchInitiated) { // show main loader only if initial fetch not initiated and no recipes
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
         <p className="text-xl font-semibold text-foreground mb-4 sm:text-2xl">Loading delicious recipes...</p>
@@ -392,7 +380,7 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4">
-      {/* Personalized Suggestions Section */}
+      {/* personalized suggestions section */}
       {user && personalizedSuggestions && (personalizedSuggestions.topCuisines.length > 0 || personalizedSuggestions.topDiets.length > 0 || personalizedSuggestions.topDishTypes.length > 0) && (
         <div className="mb-8 p-4 border border-accent rounded-lg bg-muted no-print">
           <h2 className="text-xl font-semibold mb-3 text-accent">Browse Recipes For You</h2>
@@ -417,7 +405,7 @@ export default function HomePage() {
       )}
 
       <h1 className="text-3xl font-extrabold mb-8 text-center text-foreground tracking-tight sm:text-4xl sm:mb-12">
-        {/* Title can remain generic or be updated if needed */}
+        {/* main page title */}
         Prepare Your Next Meal
       </h1>
       
@@ -438,7 +426,7 @@ export default function HomePage() {
         isAuthLoading={isAuthLoading}
         gridOverallLoading={loading && recipes.length === 0}
         animationType={!initialLoadAnimationComplete && !isFetchingMore ? 'initial' : 'subsequent'}
-        userAllergies={currentUserAllergies} // Still pass for warnings
+        userAllergies={currentUserAllergies} // pass user allergies for displaying warnings on cards
       />
 
       {isFetchingMore && (
@@ -452,7 +440,6 @@ export default function HomePage() {
          <p className="text-center text-muted-foreground py-8">You've seen all available random recipes for now!</p>
       )}
 
-      {/* Recipe Details Modal */}
       <RecipeDetailModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}

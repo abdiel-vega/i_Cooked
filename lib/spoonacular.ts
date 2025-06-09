@@ -1,5 +1,5 @@
 const API_KEY = process.env.NEXT_PUBLIC_SPOONACULAR_API_KEY;
-const BASE_URL = "https://api.spoonacular.com"; // Changed to base Spoonacular URL
+const BASE_URL = "https://api.spoonacular.com";
 
 if (!API_KEY) {
   console.warn(
@@ -7,7 +7,7 @@ if (!API_KEY) {
   );
 }
 
-// Define interfaces for better type safety
+// interfaces for api responses and parameters
 export interface Recipe {
   id: number;
   title: string;
@@ -18,7 +18,6 @@ export interface Recipe {
   summary?: string;
   extendedIngredients?: Ingredient[];
   analyzedInstructions?: AnalyzedInstruction[];
-  // Add any other properties you expect from the API
   vegetarian?: boolean;
   vegan?: boolean;
   glutenFree?: boolean;
@@ -81,19 +80,18 @@ export interface EquipmentOrIngredient {
   };
 }
 
-// Search parameters interface
 export interface SearchParams {
   query?: string;
   cuisine?: string | string[];
   diet?: string | string[];
-  type?: string; // Added meal type
+  type?: string;
   maxReadyTime?: number;
   number?: number;
   offset?: number;
-  intolerances?: string | string[]; // Added intolerances
+  intolerances?: string | string[];
 }
 
-// Enhanced search function with filters
+// search recipes with various filters
 export async function searchRecipesWithFilters(
   params: SearchParams
 ): Promise<{ recipes: Recipe[]; totalResults: number }> {
@@ -166,33 +164,32 @@ export async function searchRecipesWithFilters(
   }
 }
 
-// New function for personalized recommendations
+// fetch recipes based on user preferences like cuisines, diets, and intolerances
 export async function fetchPersonalizedRecipes(params: {
   cuisines?: string[];
   diets?: string[];
-  intolerances?: string[]; // Added intolerances
+  intolerances?: string[];
   count: number;
   offset?: number;
 }): Promise<{ recipes: Recipe[]; totalResults: number }> {
   if (!API_KEY) {
     return { recipes: [], totalResults: 0 };
   }
-  // No specific warning here, as searchRecipesWithFilters will handle empty searches if all are empty.
 
   return searchRecipesWithFilters({
     cuisine: params.cuisines,
     diet: params.diets,
-    intolerances: params.intolerances, // Pass intolerances
+    intolerances: params.intolerances,
     number: params.count,
     offset: params.offset,
   });
 }
 
-// Get random recipes
+// fetch a list of random recipes
 export async function getRandomRecipes(
   count: number = 12,
-  tags?: string, // Optional: for general tags like vegetarian, dessert etc.
-  intolerances?: string[] // Specific intolerances
+  tags?: string,
+  intolerances?: string[]
 ): Promise<Recipe[]> {
   if (!API_KEY) {
     return [];
@@ -201,7 +198,7 @@ export async function getRandomRecipes(
     const searchParamsObj = new URLSearchParams({
       apiKey: API_KEY,
       number: count.toString(),
-      addRecipeInformation: "true", // Ensure we get details like glutenFree, dairyFree
+      addRecipeInformation: "true", // ensure we get details like glutenFree, dairyFree
     });
     if (tags) searchParamsObj.append("tags", tags);
     if (intolerances && intolerances.length > 0) {
@@ -225,26 +222,26 @@ export async function getRandomRecipes(
     return data.recipes as Recipe[];
   } catch (error) {
     console.error("Failed to get random recipes:", error);
-    throw error; // Re-throw to be handled by the caller
+    throw error; // re-throw to be handled by the caller
   }
 }
 
-// Get recipes by cuisine
+// fetch recipes belonging to a specific cuisine
 export async function getRecipesByCuisine(
   cuisine: string,
   count: number = 12,
   offset: number = 0,
-  intolerances?: string[] // Added intolerances
+  intolerances?: string[]
 ): Promise<{ recipes: Recipe[]; totalResults: number }> {
   return searchRecipesWithFilters({
     cuisine: cuisine,
     number: count,
     offset: offset,
-    intolerances: intolerances, // Pass intolerances
+    intolerances: intolerances,
   });
 }
 
-// Get recipe details
+// fetch detailed information for a single recipe by its id
 export async function getRecipeDetails(id: number): Promise<Recipe | null> {
   if (!API_KEY) {
     return null;
@@ -254,7 +251,7 @@ export async function getRecipeDetails(id: number): Promise<Recipe | null> {
       `${BASE_URL}/recipes/${id}/information?apiKey=${API_KEY}&includeNutrition=false`
     );
     if (!response.ok) {
-      if (response.status === 404) return null; // Recipe not found
+      if (response.status === 404) return null; // recipe not found
       const errorData = await response
         .json()
         .catch(() => ({ message: "Failed to parse error response" }));
@@ -268,11 +265,11 @@ export async function getRecipeDetails(id: number): Promise<Recipe | null> {
     return data as Recipe;
   } catch (error) {
     console.error(`Failed to get recipe details for ID ${id}:`, error);
-    throw error; // Re-throw
+    throw error; // re-throw
   }
 }
 
-// Constants for Cuisines and Diets (can be expanded)
+// predefined lists for cuisines, diets, and meal types
 export const CUISINES = [
   "African",
   "Asian",

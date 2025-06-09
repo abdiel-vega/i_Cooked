@@ -16,37 +16,12 @@ import {
   checkIsRecipeSaved 
 } from '@/lib/supabase/recipes' 
 import { toast } from "sonner"
-// import { RecipeGrid } from '@/components/recipe-grid'; // Not used here
-import { RecipeGrid } from '@/components/recipe-grid'; // Import RecipeGrid
+import { RecipeGrid } from '@/components/recipe-grid';
 import { Allergen } from '@/lib/allergens';
 import { getUserAllergies } from '@/lib/supabase/profiles';
-import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
+import { RecipeDetailModal } from '@/components/recipe-detail-modal';
 
 const RECIPES_PER_PAGE = 12;
-
-// Helper function to check for allergens in a recipe (similar to RecipeGrid)
-// function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
-//   if (!userAllergies || userAllergies.length === 0 || !recipe) {
-//     return [];
-//   }
-//   const triggeredAllergens: string[] = [];
-//   userAllergies.forEach(allergy => {
-//     switch (allergy) {
-//       case "Gluten":
-//         if (recipe.glutenFree === false) triggeredAllergens.push("Gluten");
-//         break;
-//       case "Dairy":
-//         if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
-//         break;
-//       case "Wheat":
-//         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
-//         break;
-//       // Add other cases based on available recipe properties
-//     }
-//   });
-//   return [...new Set(triggeredAllergens)]; // Return names of allergens
-// }
-
 
 export default function CuisinePage() {
   const params = useParams();
@@ -80,13 +55,11 @@ export default function CuisinePage() {
       } else {
         setError(`Cuisine "${cuisineSlug}" not found.`);
         setLoading(false);
-        // Optionally redirect or show a 404-like message
-        // router.push('/search'); // Example redirect
       }
     }
   }, [cuisineSlug, router]);
 
-  // Effect to fetch user allergies
+  // effect to fetch user allergies
   useEffect(() => {
     async function loadUserAllergies() {
       if (user && !isAuthLoading) {
@@ -121,17 +94,15 @@ export default function CuisinePage() {
   }, [user]);
 
   const fetchCuisineRecipes = useCallback(async (cuisineName: string, offset: number) => {
-    if (offset === 0) setLoading(true); // Full loading state for initial fetch
-    else setIsFetchingMore(true); // Specific state for loading more
+    if (offset === 0) setLoading(true); // full loading state for initial fetch
+    else setIsFetchingMore(true); // specific state for loading more
 
     setError(null);
-    // const intoleranceParams = currentUserAllergies.map(allergy => getAllergenQueryValue(allergy)); // Removed for displaying warnings
 
     try {
-      // const data = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset, intoleranceParams); // Pass intolerances
-      const rawData = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset); // Removed intoleranceParams
+      const rawData = await getRecipesByCuisine(cuisineName, RECIPES_PER_PAGE, offset);
       
-      // De-duplicate rawData.recipes by ID
+      // de-duplicate fetched recipes by id
       const seenRecipeIds = new Set<number>();
       const uniqueFetchedRecipes = rawData.recipes.filter(recipe => {
         if (recipe.id == null) return false;
@@ -147,7 +118,7 @@ export default function CuisinePage() {
       
       const newCurrentOffset = offset + data.recipes.length;
       setCurrentOffset(newCurrentOffset);
-      // Corrected setHasMore logic: uses newCurrentOffset
+      // corrected sethasmore logic: uses newcurrentoffset
       setHasMore(newCurrentOffset < data.totalResults); 
       
       if (user && data.recipes.length > 0) {
@@ -164,22 +135,20 @@ export default function CuisinePage() {
         setIsFetchingMore(false);
       }
     }
-  // Removed recipes.length from dependencies to break the cycle
   }, [user, updateSavedRecipeStatusForDisplayedRecipes, currentUserAllergies]); 
 
   useEffect(() => {
-    if (actualCuisineName && !isAuthLoading) { // Ensure auth state and allergies are potentially loaded
+    if (actualCuisineName && !isAuthLoading) { // ensure auth state and allergies are potentially loaded
       setRecipes([]);
       setCurrentOffset(0);
       setHasMore(true);
       setInitialLoadAnimationComplete(false);
       fetchCuisineRecipes(actualCuisineName, 0);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actualCuisineName, isAuthLoading, currentUserAllergies]); // Removed fetchCuisineRecipes, added currentUserAllergies. User is implied by isAuthLoading for allergy fetch.
+  }, [actualCuisineName, isAuthLoading, currentUserAllergies]); 
 
   const loadMoreRecipes = useCallback(() => {
-    if (!isFetchingMore && hasMore && actualCuisineName && !loading) { // Added !loading to prevent concurrent fetches
+    if (!isFetchingMore && hasMore && actualCuisineName && !loading) { // added !loading to prevent concurrent fetches
       fetchCuisineRecipes(actualCuisineName, currentOffset);
     }
   }, [isFetchingMore, hasMore, actualCuisineName, currentOffset, fetchCuisineRecipes, loading]);
@@ -302,7 +271,7 @@ export default function CuisinePage() {
         user={user}
         isAuthLoading={isAuthLoading}
         gridOverallLoading={loading}
-        animationType={currentOffset === recipes.length && recipes.length <= RECIPES_PER_PAGE && !isFetchingMore ? 'initial' : 'subsequent'}
+        animationType={currentOffset === recipes.length && recipes.length <= RECIPES_PER_PAGE && !isFetchingMore ? 'initial' : 'subsequent'} // determine animation type based on load state
         userAllergies={currentUserAllergies}
       />
 
@@ -317,7 +286,6 @@ export default function CuisinePage() {
         <p className="text-center text-muted-foreground py-10">You've reached the end of {actualCuisineName} recipes!</p>
       )}
 
-      {/* Recipe Details Modal (same as homepage) */}
       <RecipeDetailModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -330,13 +298,13 @@ export default function CuisinePage() {
         isSaving={isSaving}
         onToggleSave={handleToggleSaveRecipe}
         currentUserAllergies={currentUserAllergies}
-        getRecipeAllergenWarnings={getRecipeAllergenWarningsCuisine} // Pass existing helper
+        getRecipeAllergenWarnings={getRecipeAllergenWarningsCuisine} // pass allergen warning helper
       />
     </div>
   )
 }
 
-// Keep for modal if needed
+// allergen warning function for the modal on this page
 function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allergen[] | undefined): string[] {
   if (!userAllergies || userAllergies.length === 0 || !recipe) {
     return [];
@@ -353,7 +321,6 @@ function getRecipeAllergenWarningsCuisine(recipe: Recipe, userAllergies: Allerge
       case "Wheat":
         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
-      // Add other cases based on available recipe properties
     }
   });
   return [...new Set(triggeredAllergens)];

@@ -1,7 +1,7 @@
 import './globals.css'
 import Navbar from '@/components/navbar';
 import { AuthProvider } from './contexts/auth-context';
-import { Toaster } from '@/components/ui/sonner'; // Import Toaster
+import { Toaster } from '@/components/ui/sonner';
 
 export default function RootLayout({
   children,
@@ -13,11 +13,11 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <Navbar />
-          {/* Adjusted padding-top to account for sticky navbar height (approx h-16 + py-3 from wrapper = ~4rem + 0.75rem*2 = 5.5rem. Let's use pt-24 for a bit more space) */}
+          {/* adjust padding-top for sticky navbar height */}
           <main className="max-w-7xl mx-auto px-4 py-8 pt-24">
             {children}
           </main>
-          <Toaster /> {/* Add Toaster here */}
+          <Toaster /> {/* add toaster for notifications */}
         </AuthProvider>
       </body>
     </html>

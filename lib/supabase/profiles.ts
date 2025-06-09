@@ -1,33 +1,32 @@
-import { createClient } from "@/lib/supabase/client"; // Changed import
+import { createClient } from "@/lib/supabase/client";
 import { Allergen } from "@/lib/allergens";
 
-// Ensure your 'profiles' table has a 'user_id' (UUID, primary key, references auth.users.id)
-// and an 'allergies' column of type TEXT[] (array of strings).
+// 'profiles' table should have 'user_id' (uuid, pk, references auth.users.id)
+// and 'allergies' (text[]).
 
-const supabase = createClient(); // Instantiate the client
+const supabase = createClient();
 
 export async function getUserAllergies(userId: string): Promise<Allergen[]> {
   try {
     const { data, error } = await supabase
       .from("profiles")
       .select("allergies")
-      .eq("user_id", userId) // Assuming 'id' is the column referencing auth.users.id
+      .eq("user_id", userId) // assuming 'user_id' is the column referencing auth.users.id
       .single();
 
     if (error) {
       if (error.code === "PGRST116") {
-        // "Resource not found"
-        // Profile row might not exist yet, especially for new users.
-        // Consider creating it here or as part of your on-signup trigger.
-        return []; // No profile means no allergies.
+        // "resource not found"
+        // profile row might not exist yet, especially for new users.
+        // consider creating it here or as part of your on-signup trigger.
+        return []; // no profile means no allergies.
       }
       console.error("Error fetching user allergies:", error.message);
       throw error;
     }
     return (data?.allergies as Allergen[]) || [];
   } catch (error) {
-    // console.error('Supabase call failed for getUserAllergies:', error);
-    return []; // Fallback to empty array on any unexpected error
+    return []; // fallback to empty array on any unexpected error
   }
 }
 
@@ -36,8 +35,8 @@ export async function updateUserAllergies(
   allergies: Allergen[]
 ): Promise<void> {
   try {
-    // Use upsert to handle cases where the profile row might not exist yet.
-    // This requires 'id' to be the primary key or have a unique constraint.
+    // use upsert to handle cases where the profile row might not exist yet.
+    // this requires 'user_id' to be the primary key or have a unique constraint.
     const { error } = await supabase
       .from("profiles")
       .upsert(
@@ -50,7 +49,6 @@ export async function updateUserAllergies(
       throw error;
     }
   } catch (error) {
-    // console.error('Supabase call failed for updateUserAllergies:', error);
-    throw error; // Re-throw to be caught by the caller
+    throw error; // re-throw to be caught by the caller
   }
 }

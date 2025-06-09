@@ -5,25 +5,24 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { 
   getSavedRecipesFromSupabase, 
   unsaveRecipeFromSupabase,
-  checkIsRecipeSaved, // Import checkIsRecipeSaved
-  saveRecipeToSupabase // Import saveRecipeToSupabase
+  checkIsRecipeSaved, 
+  saveRecipeToSupabase 
 } from '@/lib/supabase/recipes';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogClose, DialogHeader, DialogFooter, DialogTitle as ModalTitle } from '@/components/ui/dialog'; // For modal title accessibility
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { 
   Recipe as SpoonacularRecipe, 
-  getRecipeDetails // Import getRecipeDetails
+  getRecipeDetails 
 } from '@/lib/spoonacular'; 
-import { Allergen } from '@/lib/allergens'; // Import Allergen type
-import { getUserAllergies } from '@/lib/supabase/profiles'; // Import getUserAllergies
-import { AlertTriangle, ImageIcon, ShoppingCart } from 'lucide-react'; // For warning icon & shopping cart
-import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
-import { Label } from "@/components/ui/label"; // Import Label
-import { RecipeDetailModal } from '@/components/recipe-detail-modal'; // Import the new modal
+import { Allergen } from '@/lib/allergens';
+import { getUserAllergies } from '@/lib/supabase/profiles';
+import { AlertTriangle, ImageIcon, ShoppingCart } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RecipeDetailModal } from '@/components/recipe-detail-modal';
 
-// Helper function to check for allergens in a recipe for the modal
+// helper function to check for allergens in a recipe for the modal
 function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllergies: Allergen[] | undefined): string[] {
   if (!userAllergies || userAllergies.length === 0 || !recipe) {
     return [];
@@ -38,14 +37,14 @@ function getRecipeAllergenWarningsForModal(recipe: SpoonacularRecipe, userAllerg
         if (recipe.dairyFree === false) triggeredAllergens.push("Dairy");
         break;
       case "Wheat":
-        // This is a basic check. Spoonacular's `intolerances=Wheat` filter is more reliable if filtering.
-        // For display purposes, if glutenFree is false, it might contain wheat.
+        // this is a basic check. spoonacular's `intolerances=wheat` filter is more reliable if filtering.
+        // for display purposes, if glutenfree is false, it might contain wheat.
         if (recipe.glutenFree === false) triggeredAllergens.push("Wheat");
         break;
-      // Add more cases if your SpoonacularRecipe type includes other direct boolean flags for allergens
+      // add more cases if your spoonacularrecipe type includes other direct boolean flags for allergens
     }
   });
-  return [...new Set(triggeredAllergens)]; // Return names of allergens
+  return [...new Set(triggeredAllergens)]; // return names of allergens
 }
 
 
@@ -56,19 +55,19 @@ export default function SavedRecipesList({
   selectedRecipeIdsForShoppingList?: Set<number>;
   onToggleRecipeForShoppingList?: (recipe: SpoonacularRecipe) => void;
 }) {
-  const { user, isLoading: isAuthLoading } = useAuth(); // Added isAuthLoading
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [savedRecipes, setSavedRecipes] = useState<SpoonacularRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for recipe details modal
+  // state for recipe details modal
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<SpoonacularRecipe | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
   
-  // State for managing saved status within this component, especially for the modal
+  // state for managing saved status within this component, especially for the modal
   const [componentSavedRecipeIds, setComponentSavedRecipeIds] = useState<Set<number>>(new Set());
   const [isSavingRecipe, setIsSavingRecipe] = useState<Record<number, boolean>>({});
 
@@ -76,7 +75,7 @@ export default function SavedRecipesList({
   const fetchAndSetInitialSavedIds = useCallback(async (recipes: SpoonacularRecipe[]) => {
     if (!user || recipes.length === 0) return;
     const ids = new Set<number>();
-    // Assuming all recipes in `savedRecipes` are indeed saved.
+    // assuming all recipes in `savedrecipes` are indeed saved.
     recipes.forEach(recipe => ids.add(recipe.id));
     setComponentSavedRecipeIds(ids);
   }, [user]);
@@ -86,8 +85,8 @@ export default function SavedRecipesList({
       if (!user) {
         setLoading(false);
         setSavedRecipes([]);
-        setComponentSavedRecipeIds(new Set()); // Clear saved IDs
-        setIsModalOpen(false); // Close modal if open
+        setComponentSavedRecipeIds(new Set()); // clear saved ids
+        setIsModalOpen(false); // close modal if open
         setSelectedRecipeDetail(null);
         return;
       }
@@ -97,7 +96,7 @@ export default function SavedRecipesList({
       try {
         const recipesFromSupabase = await getSavedRecipesFromSupabase(user.id);
         
-        // De-duplicate recipesFromSupabase by ID
+        // de-duplicate recipesfromsupabase by id
         const seenRecipeIds = new Set<number>();
         const uniqueRecipes = recipesFromSupabase.filter(recipe => {
           if (recipe.id == null) return false;
@@ -110,7 +109,7 @@ export default function SavedRecipesList({
         });
 
         setSavedRecipes(uniqueRecipes);
-        await fetchAndSetInitialSavedIds(uniqueRecipes); // Initialize saved IDs based on fetched recipes
+        await fetchAndSetInitialSavedIds(uniqueRecipes); // initialize saved ids based on fetched recipes
       } catch (err: any) {
         console.error('Failed to fetch saved recipes:', err);
         setError(err.message || 'Could not load your saved recipes.');
@@ -119,12 +118,12 @@ export default function SavedRecipesList({
       }
     }
 
-    if (!isAuthLoading) { // Fetch only when auth state is resolved
+    if (!isAuthLoading) { // fetch only when auth state is resolved
         fetchSavedRecipes();
     }
   }, [user, isAuthLoading, fetchAndSetInitialSavedIds]);
 
-  // Effect to fetch user allergies
+  // effect to fetch user allergies
   useEffect(() => {
     async function loadUserAllergies() {
       if (user && !isAuthLoading) {
@@ -133,9 +132,9 @@ export default function SavedRecipesList({
           setCurrentUserAllergies(allergies);
         } catch (error) {
           console.error("Failed to load user allergies in saved recipes:", error);
-          // Optionally set an error state for allergies
+          // optionally set an error state for allergies
         }
-      } else if (!user && !isAuthLoading) { // Clear allergies if user logs out or auth is resolved without user
+      } else if (!user && !isAuthLoading) { // clear allergies if user logs out or auth is resolved without user
         setCurrentUserAllergies([]);
       }
     }
@@ -143,7 +142,7 @@ export default function SavedRecipesList({
   }, [user, isAuthLoading]);
 
 
-  // Effect to update saved status for the selected recipe in the modal
+  // effect to update saved status for the selected recipe in the modal
   useEffect(() => {
     if (selectedRecipeDetail && user && selectedRecipeDetail.id && !isAuthLoading) {
       const recipeId = selectedRecipeDetail.id;
@@ -164,7 +163,7 @@ export default function SavedRecipesList({
       toast.error('You must be logged in.');
       return;
     }
-    // Optimistically update UI for the main list
+    // optimistically update ui for the main list
     setSavedRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
     setComponentSavedRecipeIds(prev => {
         const newSet = new Set(prev);
@@ -178,24 +177,24 @@ export default function SavedRecipesList({
     } catch (err: any) {
       console.error('Failed to unsave recipe:', err);
       toast.error(err.message || 'Could not unsave the recipe.');
-      // Revert UI if error (optional, depends on desired UX)
-      // For simplicity, we're not reverting here, assuming unsave usually succeeds if initiated.
-      // To revert, you'd need to refetch or add the recipe back to state.
+      // revert ui if error (optional, depends on desired ux)
+      // for simplicity, we're not reverting here, assuming unsave usually succeeds if initiated.
+      // to revert, you'd need to refetch or add the recipe back to state.
     }
   };
   
   const handleRecipeCardClick = async (recipeId: number) => {
-    if (isModalOpen) return; // Prevent opening if already open / loading
+    if (isModalOpen) return; // prevent opening if already open / loading
 
     setSelectedRecipeDetail(null);
     setModalLoading(true);
     setModalError(null);
     setIsModalOpen(true);
     try {
-      const details = await getRecipeDetails(recipeId); // Fetch fresh details
+      const details = await getRecipeDetails(recipeId); // fetch fresh details
       if (details) {
         setSelectedRecipeDetail(details);
-        // Check and update saved status for the modal
+        // check and update saved status for the modal
         if (user) {
             const isSaved = await checkIsRecipeSaved(user.id, details.id);
             setComponentSavedRecipeIds(prev => {
@@ -237,13 +236,13 @@ export default function SavedRecipesList({
           newSet.delete(recipeId);
           return newSet;
         });
-        // Also update the main list if the recipe is unsaved from modal
+        // also update the main list if the recipe is unsaved from modal
         setSavedRecipes(prev => prev.filter(r => r.id !== recipeId));
         toast.success(`"${recipeToToggle.title}" unsaved!`);
       } else {
         await saveRecipeToSupabase(user.id, recipeToToggle);
         setComponentSavedRecipeIds(prev => new Set(prev).add(recipeId));
-         // Also update the main list if a new recipe is saved from modal (though less likely in "saved list" context)
+         // also update the main list if a new recipe is saved from modal (though less likely in "saved list" context)
         if (!savedRecipes.find(r => r.id === recipeId)) {
             setSavedRecipes(prev => [...prev, recipeToToggle]);
         }
@@ -276,12 +275,11 @@ export default function SavedRecipesList({
     return (
         <div className="text-center py-10">
             <p className="text-destructive">{error}</p>
-            {/* Optional: Add a retry button if applicable */}
         </div>
     );
   }
 
-  if (!user && !isAuthLoading) { // Ensure auth check is complete
+  if (!user && !isAuthLoading) { // ensure auth check is complete
     return (
         <div className="text-center py-10">
             <p className="text-foreground">Please <Link href="/auth/login" className="text-accent hover:underline">log in</Link> to see your saved recipes.</p>
@@ -289,7 +287,7 @@ export default function SavedRecipesList({
     );
   }
 
-  if (savedRecipes.length === 0 && !loading && !isAuthLoading) { // Ensure auth check is complete
+  if (savedRecipes.length === 0 && !loading && !isAuthLoading) { // ensure auth check is complete
     return (
         <div className="text-center py-10">
             <p className="text-foreground">You haven't saved any recipes yet.</p>
@@ -303,28 +301,28 @@ export default function SavedRecipesList({
   return (
     <div className="space-y-8">
       <h2 className="text-3xl font-semibold text-foreground mb-6">Your Saved Recipes</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10"> {/* Updated gap to match RecipeGrid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10"> {/* updated gap to match recipegrid */}
         {savedRecipes.map(recipe => {
           const allergenWarningsOnCard = getRecipeAllergenWarningsForModal(recipe, currentUserAllergies);
           return (
-          <div // Replaces Card
+          <div // recipe card container
             key={recipe.id} 
             className="bg-muted rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col group recipe-card-fade-in"
           >
             <div onClick={() => handleRecipeCardClick(recipe.id)} className="cursor-pointer">
-              <div className="relative h-56 w-full overflow-hidden"> {/* Replaces CardHeader, matches RecipeGrid image container */}
+              <div className="relative h-56 w-full overflow-hidden"> {/* image container, matches recipegrid */}
                 {recipe.image ? (
                   <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 ) : (
-                  <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110"> {/* Matches RecipeGrid placeholder */}
+                  <div className="w-full h-full bg-muted flex flex-col items-center justify-center text-muted-foreground p-3 transition-transform duration-500 group-hover:scale-110"> {/* placeholder for missing image, matches recipegrid */}
                     <ImageIcon size={40} className="mb-2" />
                     <p className="text-sm text-center font-semibold">{recipe.title}</p>
                   </div>
                 )}
               </div>
-              <div className="p-5 flex-grow"> {/* Replaces CardContent, matches RecipeGrid content area */}
+              <div className="p-5 flex-grow"> {/* content area, matches recipegrid */}
                 <h3 
-                  className="font-semibold text-lg mb-2 text-foreground truncate group-hover:text-accent transition-colors" /* Matches RecipeGrid title */
+                  className="font-semibold text-lg mb-2 text-foreground truncate group-hover:text-accent transition-colors" /* recipe title, matches recipegrid */
                   title={recipe.title}
                 >
                   {recipe.title}
@@ -340,15 +338,15 @@ export default function SavedRecipesList({
 
                 {recipe.summary && (
                   <p 
-                    className="text-xs text-muted-foreground line-clamp-3 mb-2" /* Styled like RecipeGrid info */
+                    className="text-xs text-muted-foreground line-clamp-3 mb-2" /* recipe summary, styled like recipegrid info */
                     dangerouslySetInnerHTML={{ __html: recipe.summary.length > 100 ? recipe.summary.substring(0,100) + '...': recipe.summary}} 
                   />
                 )}
               </div>
             </div>
-            <div className="mt-auto pt-3 p-5 border-t border-background"> {/* Replaces CardFooter, matches RecipeGrid button container + padding */}
+            <div className="mt-auto pt-3 p-5 border-t border-background"> {/* footer, matches recipegrid button container + padding */}
               {onToggleRecipeForShoppingList && selectedRecipeIdsForShoppingList && (
-                <div className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-background transition-colors mb-2"> {/* Added mb-2 for spacing */}
+                <div className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-background transition-colors mb-2"> {/* spacing for shopping list checkbox */}
                   <Checkbox
                     id={`shopping-list-${recipe.id}`}
                     checked={selectedRecipeIdsForShoppingList.has(recipe.id)}
@@ -363,7 +361,7 @@ export default function SavedRecipesList({
               )}
               <Button 
                 variant="destructive" 
-                size="sm" /* Added size sm for consistency */
+                size="sm" /* small button size for consistency */
                 className="w-full"
                 onClick={(e) => {
                     e.stopPropagation(); 
@@ -377,7 +375,6 @@ export default function SavedRecipesList({
         )})}
       </div>
 
-      {/* Recipe Details Modal */}
       <RecipeDetailModal
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -386,11 +383,11 @@ export default function SavedRecipesList({
         modalError={modalError}
         user={user}
         isAuthLoading={isAuthLoading}
-        savedRecipeIds={componentSavedRecipeIds} // Use component's saved IDs state
-        isSaving={isSavingRecipe} // Use component's saving state
-        onToggleSave={handleToggleSaveRecipeInModal} // Pass the correct handler
+        savedRecipeIds={componentSavedRecipeIds} // pass component's saved ids state
+        isSaving={isSavingRecipe} // pass component's saving state
+        onToggleSave={handleToggleSaveRecipeInModal} // pass the toggle save handler
         currentUserAllergies={currentUserAllergies}
-        getRecipeAllergenWarnings={getRecipeAllergenWarningsForModal} // Pass existing helper
+        getRecipeAllergenWarnings={getRecipeAllergenWarningsForModal} // pass allergen warning helper
       />
     </div>
   );
