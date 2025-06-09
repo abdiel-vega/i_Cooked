@@ -237,9 +237,13 @@ export default function HomePage() {
         await updateSavedRecipeStatusForDisplayedRecipes(uniqueNewRecipes);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) { // Changed from any to unknown
       console.error("Failed to fetch recipes:", err);
-      setError(err.message || 'Could not fetch recipes.');
+      if (err instanceof Error) { // Type guard
+        setError(err.message || 'Could not fetch recipes.');
+      } else {
+        setError('Could not fetch recipes.');
+      }
       setHasMore(false);
     } finally {
       if (isInitialLoad) {
@@ -309,9 +313,13 @@ export default function HomePage() {
       } else {
         setModalError('Could not fetch recipe details. The recipe might not exist or there was an API issue.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) { 
       console.error(`Failed to load recipe details for ${recipeId}:`, err);
-      setModalError(err.message || 'Could not fetch recipe details. Please try again later.');
+      if (err instanceof Error) { // type guard
+        setModalError(err.message || 'Could not fetch recipe details. Please try again later.');
+      } else {
+        setModalError('Could not fetch recipe details. Please try again later.');
+      }
     } finally {
       setModalLoading(false);
     }
@@ -344,15 +352,17 @@ export default function HomePage() {
         setSavedRecipeIds(prev => new Set(prev).add(recipeId));
         toast.success(`"${recipeToToggle.title}" saved!`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) { 
       console.error("Failed to toggle save recipe:", error);
       // check for unique constraint violation (already saved)
-      if (error.message && error.message.includes('already saved')) {
+      if (error instanceof Error && error.message && error.message.includes('already saved')) { // Type guard and check message property
         toast.info('This recipe is already in your saved list.');
         // ensure ui consistency if supabase says it's saved but client state thought otherwise
         setSavedRecipeIds(prev => new Set(prev).add(recipeId)); 
-      } else {
+      } else if (error instanceof Error) { // type guard
         toast.error(error.message || 'Could not update saved status. Please try again.');
+      } else {
+        toast.error('Could not update saved status. Please try again.');
       }
     } finally {
       setIsSaving(prev => ({ ...prev, [recipeId]: false }));
@@ -452,7 +462,7 @@ export default function HomePage() {
         isSaving={isSaving}
         onToggleSave={handleToggleSaveRecipe}
         currentUserAllergies={currentUserAllergies}
-        getRecipeAllergenWarnings={getHomePageRecipeAllergenWarnings}
+        getRecipeAllergenWarnings={getHomePageRecipeAllergenWarnings} // Ensure this prop is correctly typed if it's the source of an error
       />
 
     </div>

@@ -41,8 +41,6 @@ export default function CuisinePage() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentOffset, setCurrentOffset] = useState(0);
-  const [totalResults, setTotalResults] = useState(0);
-  const [initialLoadAnimationComplete, setInitialLoadAnimationComplete] = useState(false);
   
   const [actualCuisineName, setActualCuisineName] = useState<string | null>(null);
   const [currentUserAllergies, setCurrentUserAllergies] = useState<Allergen[]>([]);
@@ -114,7 +112,6 @@ export default function CuisinePage() {
       const data = { ...rawData, recipes: uniqueFetchedRecipes };
       
       setRecipes(prevRecipes => offset === 0 ? data.recipes : [...prevRecipes, ...data.recipes]);
-      setTotalResults(data.totalResults);
       
       const newCurrentOffset = offset + data.recipes.length;
       setCurrentOffset(newCurrentOffset);
@@ -124,13 +121,16 @@ export default function CuisinePage() {
       if (user && data.recipes.length > 0) {
         await updateSavedRecipeStatusForDisplayedRecipes(data.recipes);
       }
-    } catch (err: any) {
+    } catch (err: unknown) { 
       console.error(`Failed to load recipes for ${cuisineName}:`, err);
-      setError(err.message || `Could not fetch recipes for ${cuisineName}. Please try again later.`);
+      if (err instanceof Error) { // type guard
+        setError(err.message || `Could not fetch recipes for ${cuisineName}. Please try again later.`);
+      } else {
+        setError(`Could not fetch recipes for ${cuisineName}. Please try again later.`);
+      }
     } finally {
       if (offset === 0) {
         setLoading(false);
-        setTimeout(() => setInitialLoadAnimationComplete(true), 50);
       } else {
         setIsFetchingMore(false);
       }
@@ -142,10 +142,9 @@ export default function CuisinePage() {
       setRecipes([]);
       setCurrentOffset(0);
       setHasMore(true);
-      setInitialLoadAnimationComplete(false);
       fetchCuisineRecipes(actualCuisineName, 0);
     }
-  }, [actualCuisineName, isAuthLoading, currentUserAllergies]); 
+  }, [actualCuisineName, isAuthLoading, fetchCuisineRecipes]); // Added fetchCuisineRecipes to dependency array, removed currentUserAllergies
 
   const loadMoreRecipes = useCallback(() => {
     if (!isFetchingMore && hasMore && actualCuisineName && !loading) { // added !loading to prevent concurrent fetches
@@ -186,8 +185,12 @@ export default function CuisinePage() {
       const details = await getRecipeDetails(recipeId);
       if (details) setSelectedRecipe(details);
       else setModalError('Could not fetch recipe details.');
-    } catch (err: any) {
-      setModalError(err.message || 'Could not fetch recipe details.');
+    } catch (err: unknown) { 
+      if (err instanceof Error) { // type guard
+        setModalError(err.message || 'Could not fetch recipe details.');
+      } else {
+        setModalError('Could not fetch recipe details.');
+      }
     } finally {
       setModalLoading(false);
     }
@@ -214,12 +217,14 @@ export default function CuisinePage() {
         setSavedRecipeIds(prev => new Set(prev).add(recipeId));
         toast.success(`"${recipeToToggle.title}" saved!`);
       }
-    } catch (error: any) {
-      if (error.message && error.message.includes('already saved')) {
+    } catch (error: unknown) { 
+      if (error instanceof Error && error.message && error.message.includes('already saved')) { // Type guard and check message property
         toast.info('This recipe is already in your saved list.');
         setSavedRecipeIds(prev => new Set(prev).add(recipeId)); 
-      } else {
+      } else if (error instanceof Error) { // type guard
         toast.error(error.message || 'Could not update saved status.');
+      } else {
+        toast.error('Could not update saved status.');
       }
     } finally {
       setIsSaving(prev => ({ ...prev, [recipeId]: false }));
@@ -283,7 +288,7 @@ export default function CuisinePage() {
       )}
 
       {!hasMore && recipes.length > 0 && (
-        <p className="text-center text-muted-foreground py-10">You've reached the end of {actualCuisineName} recipes!</p>
+        <p className="text-center text-muted-foreground py-10">You&apos;ve reached the end of {actualCuisineName} recipes!</p>
       )}
 
       <RecipeDetailModal

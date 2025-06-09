@@ -127,18 +127,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout(); // this should handle supabase signout and update context
-      // the authprovider's onauthstatechange should redirect or update ui,
-      // but an explicit push can be a fallback.
-      router.push('/auth/login'); 
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // optionally, show an error to the user
-    }
-  };
-
   const handleToggleRecipeForShoppingList = (recipe: SpoonacularRecipe) => {
     setSelectedRecipesForList(prev => {
       const newMap = new Map(prev);
@@ -167,7 +155,7 @@ export default function ProfilePage() {
     }
     setIsGeneratingList(true);
     setGeneratedShoppingList(null);
-    let operationSuccess = true;
+    const operationSuccess = true;
 
     const recipesToProcess: SpoonacularRecipe[] = [];
     const updatedSelectedRecipes = new Map(selectedRecipesForList);
@@ -186,7 +174,7 @@ export default function ProfilePage() {
             recipesToProcess.push(recipe); // process with what we have (likely no ingredients)
             toast.info(`Could not fetch ingredients for ${recipe.title}. It may not contribute to the list.`);
           }
-        } catch (fetchErr: any) {
+        } catch (fetchErr: unknown) { 
           toast.dismiss(); 
           console.error(`Error fetching details for ${recipe.title}:`, fetchErr);
           toast.error(`Error fetching details for ${recipe.title}. It may not contribute to the list.`);

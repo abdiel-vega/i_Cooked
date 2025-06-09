@@ -84,7 +84,7 @@ function SearchResultsPageContent() {
       }
     });
     setSavedRecipeIds(newSavedIds);
-  }, [user, savedRecipeIds]);
+  }, [user]); // Removed savedRecipeIds from dependency array
 
   // effect to fetch user allergies
   useEffect(() => {
@@ -134,15 +134,19 @@ function SearchResultsPageContent() {
       if (user && data.recipes.length > 0) {
         await updateSavedRecipeStatus(data.recipes);
       }
-    } catch (err: any) {
+    } catch (err: unknown) { 
       console.error("Failed to fetch search results:", err);
-      setError(err.message || 'Could not fetch recipes. Please try again.');
+      if (err instanceof Error) { // type guard
+        setError(err.message || 'Could not fetch recipes. Please try again.');
+      } else {
+        setError('Could not fetch recipes. Please try again.');
+      }
     } finally {
       if (initialFetch) setLoading(false);
       setIsFetchingMore(false);
       if (initialFetch) setInitialLoadComplete(true);
     }
-  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, currentUserAllergies]); // added type dependency
+  }, [query, cuisine, diet, type, maxReadyTime, user, updateSavedRecipeStatus, isAuthLoading]); // Removed currentUserAllergies, added fetchRecipes to dependency array
 
   useEffect(() => {
     // trigger initial fetch on search param change or when allergies load (if user logged in)
@@ -150,7 +154,7 @@ function SearchResultsPageContent() {
     if (!isAuthLoading) { // ensure auth state is resolved before fetching
         fetchRecipes(0, true);
     }
-  }, [query, cuisine, diet, type, maxReadyTime, currentUserAllergies, isAuthLoading]); // added type dependency
+  }, [query, cuisine, diet, type, maxReadyTime, isAuthLoading, fetchRecipes]); // Removed currentUserAllergies, added fetchRecipes to dependency array
 
 
    useEffect(() => {
@@ -197,8 +201,12 @@ function SearchResultsPageContent() {
         const isSaved = await checkIsRecipeSaved(user.id, details.id);
         if (isSaved) setSavedRecipeIds(prev => new Set(prev).add(details.id));
       }
-    } catch (err: any) {
-      setModalError(err.message || 'Could not fetch recipe details.');
+    } catch (err: unknown) { 
+      if (err instanceof Error) { // type guard
+        setModalError(err.message || 'Could not fetch recipe details.');
+      } else {
+        setModalError('Could not fetch recipe details.');
+      }
     } finally {
       setModalLoading(false);
     }
@@ -221,11 +229,17 @@ function SearchResultsPageContent() {
       } else {
         await saveRecipeToSupabase(user.id, recipeToToggle);
         setSavedRecipeIds(prev => new Set(prev).add(recipeId));
-        toast.success(`"${recipeToToggle.title}" saved!`);
+        toast.success(`\"${recipeToToggle.title}\" saved!`);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Could not update saved status.');
-       if (error.message && error.message.includes('already saved')) {
+    } catch (error: unknown) { 
+      if (error instanceof Error && error.message && error.message.includes('already saved')) { // Type guard and check message property
+        toast.error(error.message || 'Could not update saved status.');
+      } else if (error instanceof Error) { // type guard
+        toast.error(error.message || 'Could not update saved status.');
+      } else {
+        toast.error('Could not update saved status.');
+      }
+       if (error instanceof Error && error.message && error.message.includes('already saved')) { // Type guard and check message property
         setSavedRecipeIds(prev => new Set(prev).add(recipeId)); 
       }
     } finally {
@@ -313,7 +327,7 @@ function SearchResultsPageContent() {
       )}
 
       {initialLoadComplete && recipes.length > 0 && recipes.length >= totalResults && !isFetchingMore && (
-        <p className="text-center text-muted-foreground py-8">You've reached the end of the results.</p>
+        <p className="text-center text-muted-foreground py-8">You&apos;ve reached the end of the results.</p> // Escaped apostrophe
       )}
 
       <RecipeDetailModal
