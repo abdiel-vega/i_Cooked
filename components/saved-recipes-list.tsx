@@ -111,9 +111,13 @@ export default function SavedRecipesList({
 
         setSavedRecipes(uniqueRecipes);
         await fetchAndSetInitialSavedIds(uniqueRecipes); // initialize saved ids based on fetched recipes
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch saved recipes:', err);
-        setError(err.message || 'Could not load your saved recipes.');
+        if (err instanceof Error) {
+          setError(err.message || 'Could not load your saved recipes.');
+        } else {
+          setError('Could not load your saved recipes.');
+        }
       } finally {
         setLoading(false);
       }
@@ -175,12 +179,13 @@ export default function SavedRecipesList({
     try {
       await unsaveRecipeFromSupabase(user.id, recipeId);
       toast.success(`"${recipeTitle}" unsaved successfully!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to unsave recipe:', err);
-      toast.error(err.message || 'Could not unsave the recipe.');
-      // revert ui if error (optional, depends on desired ux)
-      // for simplicity, we're not reverting here, assuming unsave usually succeeds if initiated.
-      // to revert, you'd need to refetch or add the recipe back to state.
+      if (err instanceof Error) {
+        toast.error(err.message || 'Could not unsave the recipe.');
+      } else {
+        toast.error('Could not unsave the recipe.');
+      }
     }
   };
   
@@ -208,9 +213,13 @@ export default function SavedRecipesList({
       } else {
         setModalError('Could not fetch recipe details. The recipe might not exist or there was an API issue.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`Failed to load recipe details for ${recipeId}:`, err);
-      setModalError(err.message || 'Could not fetch recipe details. Please try again later.');
+      if (err instanceof Error) {
+        setModalError(err.message || 'Could not fetch recipe details. Please try again later.');
+      } else {
+        setModalError('Could not fetch recipe details. Please try again later.');
+      }
     } finally {
       setModalLoading(false);
     }
@@ -249,13 +258,15 @@ export default function SavedRecipesList({
         }
         toast.success(`"${recipeToToggle.title}" saved!`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to toggle save recipe in modal:", error);
-      if (error.message && error.message.includes('already saved')) {
+      if (error instanceof Error && error.message && error.message.includes('already saved')) {
         toast.info('This recipe is already in your saved list.');
         setComponentSavedRecipeIds(prev => new Set(prev).add(recipeId)); 
-      } else {
+      } else if (error instanceof Error) {
         toast.error(error.message || 'Could not update saved status. Please try again.');
+      } else {
+        toast.error('Could not update saved status. Please try again.');
       }
     } finally {
       setIsSavingRecipe(prev => ({ ...prev, [recipeId]: false }));
@@ -291,7 +302,7 @@ export default function SavedRecipesList({
   if (savedRecipes.length === 0 && !loading && !isAuthLoading) { // ensure auth check is complete
     return (
         <div className="text-center py-10">
-            <p className="text-foreground">You haven't saved any recipes yet.</p>
+            <p className="text-foreground">You haven&apos;t saved any recipes yet.</p>
             <Link href="/" className="text-accent hover:underline mt-2 inline-block">
                 Discover recipes
             </Link>

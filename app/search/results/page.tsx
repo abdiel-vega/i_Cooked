@@ -71,19 +71,23 @@ function SearchResultsPageContent() {
 
   const updateSavedRecipeStatus = useCallback(async (recipesToCheck: Recipe[]) => {
     if (!user || recipesToCheck.length === 0) return;
-    const newSavedIds = new Set<number>(savedRecipeIds);
+
     const checks = recipesToCheck
       .filter(recipe => recipe.id != null)
       .map(recipe => 
         checkIsRecipeSaved(user.id, recipe.id!).then(isSaved => ({ id: recipe.id!, isSaved }))
       );
     const results = await Promise.all(checks);
-    results.forEach(result => {
-      if (result.isSaved) {
-        newSavedIds.add(result.id);
-      }
+
+    setSavedRecipeIds(prevSavedIds => {
+      const newSavedIds = new Set<number>(prevSavedIds);
+      results.forEach(result => {
+        if (result.isSaved) {
+          newSavedIds.add(result.id);
+        }
+      });
+      return newSavedIds;
     });
-    setSavedRecipeIds(newSavedIds);
   }, [user]);
 
   // effect to fetch user allergies

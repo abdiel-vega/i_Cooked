@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Allergen } from "@/lib/allergens";
 
-// 'profiles' table should have 'user_id' (uuid, pk, references auth.users.id)
+// 'profiles' table has 'user_id'
 // and 'allergies' (text[]).
 
 const supabase = createClient();
@@ -11,7 +11,7 @@ export async function getUserAllergies(userId: string): Promise<Allergen[]> {
     const { data, error } = await supabase
       .from("profiles")
       .select("allergies")
-      .eq("user_id", userId) // assuming 'user_id' is the column referencing auth.users.id
+      .eq("user_id", userId)
       .single();
 
     if (error) {
@@ -25,7 +25,7 @@ export async function getUserAllergies(userId: string): Promise<Allergen[]> {
       throw error;
     }
     return (data?.allergies as Allergen[]) || [];
-  } catch (error) {
+  } catch (_error) {
     return []; // fallback to empty array on any unexpected error
   }
 }
