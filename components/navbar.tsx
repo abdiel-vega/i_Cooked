@@ -31,7 +31,7 @@ export default function Navbar() {
   );
   
   const MobileNavLink = ({ href, children, onClick }: { href: string, children: React.ReactNode, onClick?: () => void }) => (
-    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-muted text-foreground text-lg">
+    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md hover:bg-accent text-accent-foreground text-lg">
       {children}
     </Link>
   );
@@ -94,7 +94,7 @@ export default function Navbar() {
 
         {/* mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 mx-3 mt-1 bg-background/95 backdrop-blur-sm border border-muted-foreground/20 rounded-lg shadow-xl p-4 space-y-2">
+          <div className="md:hidden absolute top-full left-0 right-0 mx-3 mt-1 bg-background border border-accent rounded-lg shadow-xl p-4 space-y-2">
             <MobileNavLink href="/" onClick={toggleMobileMenu}>
               <Home size={22} /> Home
             </MobileNavLink>
