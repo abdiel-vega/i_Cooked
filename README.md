@@ -1,4 +1,4 @@
-# i_Cooked - Your Personal Recipe Management Hub
+# i_Cooked - Motivate yourself to cook your next delicious meals!
 
 **i_Cooked**, a web application made to help you discover, save, and organize your favorite recipes. Motivate yourself
 to find and cook new food!
