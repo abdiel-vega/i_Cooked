@@ -31,7 +31,7 @@ export default function Navbar() {
   );
   
   const MobileNavLink = ({ href, children, onClick }: { href: string, children: React.ReactNode, onClick?: () => void }) => (
-    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md text-foreground hover:bg-accent text-accent-foreground text-lg">
+    <Link href={href} onClick={onClick} className="flex items-center gap-3 p-3 rounded-md text-foreground hover:bg-accent hover:text-accent-foreground text-lg">
       {children}
     </Link>
   );
