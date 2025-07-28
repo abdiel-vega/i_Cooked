@@ -39,7 +39,7 @@ export default function Navbar() {
 
   return (
     <div className="sticky top-0 z-50 pt-3">
-      <nav className="bg-transparent backdrop-blur-md border border-transparent rounded-xl shadow-lg max-w-7xl mx-auto">
+      <nav className="bg-background rounded-xl shadow-lg max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto py-2 px-4">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center font-bold text-2xl sm:text-3xl text-foreground transition delay-50 duration-300 ease-in-out hover:scale-105">
