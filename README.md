@@ -70,7 +70,7 @@ _Shopping List Generator with a generated list._
   - Step-by-step cooking instructions
 - **Seamless Browsing:** View recipe details without navigating away from your current page (e.g., search results, home page).
 
-## Technologies Used (Example)
+## Technologies Used
 
 - **Frontend:** Next.js (React), TypeScript, Tailwind CSS
 - **Backend/Database:** Supabase (for user authentication and storing saved recipes/preferences)
